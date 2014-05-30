@@ -1,0 +1,6 @@
+release/
+debug/
+reports
+perf.data
+perf.data.old
+*.dat
