@@ -1,6 +1,8 @@
 [submodule "mnist"]
 	path = mnist
 	url = git@github.com:wichtounet/mnist.git
+	branch = master
 [submodule "dbn"]
 	path = dbn
 	url = git@github.com:wichtounet/dbn.git
+	branch = master
