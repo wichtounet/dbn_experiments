@@ -63,8 +63,10 @@ void display(const DBN& dbn, const Image& image){
 
     std::cout << "Activation probabilities" << std::endl;
     for(std::size_t i = 0; i < 10; ++i){
-        std::cout << i << ":" << weights[i] << std::endl;
+        auto w = weights[i];
+        std::cout << "\t" << i << ":" << w << "(" << w * 100.0 << "%)" << std::endl;
     }
+    std::cout  << "Answer" << dbn->predict(image) << std::endl;
 }
 
 } //end of anonymous namespace
@@ -116,7 +118,7 @@ int main(int argc, char* argv[]){
             dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 100>,
             //dbn::layer<dbn::conf<true, 100, false, true>, 300, 300>,
             dbn::layer<dbn::conf<true, 100, false, true>, 100, 200>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::EXP>, 200, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SOFTMAX>, 200, 10>> dbn_t;
 
         auto labels = dbn::make_fake(training_labels);
 
@@ -141,6 +143,8 @@ int main(int argc, char* argv[]){
         }
 
         if(prob){
+            display(dbn, training_images[256]);
+            display(dbn, training_images[512]);
             display(dbn, training_images[666]);
             display(dbn, training_images[1024]);
 
