@@ -11,13 +11,21 @@
 #include "dbn/dbn.hpp"
 #include "dbn/layer.hpp"
 #include "dbn/conf.hpp"
-#include "dbn/image_utils.hpp"
 #include "dbn/labels.hpp"
 #include "dbn/test.hpp"
 
 #include "mnist/mnist_reader.hpp"
 
 namespace {
+
+template<typename Container>
+void binarize_each(Container& values){
+    for(auto& vec : values){
+        for(auto& v : vec){
+            v = v > 10.0 ? 1.0 : 0.0;
+        }
+    }
+}
 
 template<typename DBN, typename P>
 void test_all(DBN& dbn, std::vector<vector<double>>& training_images, const std::vector<uint8_t>& training_labels, P&& predictor){

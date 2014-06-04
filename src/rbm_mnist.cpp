@@ -10,9 +10,21 @@
 #include "dbn/rbm.hpp"
 #include "dbn/layer.hpp"
 #include "dbn/conf.hpp"
-#include "dbn/image_utils.hpp"
 
 #include "mnist/mnist_reader.hpp"
+
+namespace {
+
+template<typename Container>
+void binarize_each(Container& values){
+    for(auto& vec : values){
+        for(auto& v : vec){
+            v = v > 10.0 ? 1.0 : 0.0;
+        }
+    }
+}
+
+} //end of anonymous namespace
 
 int main(int argc, char* argv[]){
     auto reconstruction = false;
