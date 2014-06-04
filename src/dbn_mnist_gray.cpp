@@ -11,13 +11,21 @@
 #include "dbn/dbn.hpp"
 #include "dbn/layer.hpp"
 #include "dbn/conf.hpp"
-#include "dbn/image_utils.hpp"
 #include "dbn/labels.hpp"
 #include "dbn/test.hpp"
 
 #include "mnist/mnist_reader.hpp"
 
 namespace {
+
+template<typename Container>
+void normalize_each(Container& values){
+    for(auto& vec : values){
+        for(auto& v : vec){
+            v /= 255.0;
+        }
+    }
+}
 
 template<typename DBN, typename P>
 void test_all(DBN& dbn, std::vector<vector<double>>& training_images, const std::vector<uint8_t>& training_labels, P&& predictor){
@@ -65,7 +73,7 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    binarize_each(training_images);
+    normalize_each(training_images);
 
     if(simple){
         typedef dbn::dbn<
@@ -80,10 +88,10 @@ int main(int argc, char* argv[]){
         test_all(dbn, training_images, training_labels, dbn::label_predictor());
     } else {
         typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 30>,
+            dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 100>,
             //dbn::layer<dbn::conf<true, 100, false, true>, 300, 300>,
-            dbn::layer<dbn::conf<true, 100, false, true>, 30, 30>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::EXP>, 30, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, false, true>, 100, 100>,
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::EXP>, 100, 10>> dbn_t;
 
         auto labels = dbn::make_fake(training_labels);
 
@@ -94,7 +102,7 @@ int main(int argc, char* argv[]){
         if(load){
             std::cout << "Load from file" << std::endl;
 
-            std::ifstream is("dbn.dat", std::ifstream::binary);
+            std::ifstream is("dbn_gray.dat", std::ifstream::binary);
             dbn->load(is);
         } else {
             std::cout << "Start pretraining" << std::endl;
@@ -103,7 +111,7 @@ int main(int argc, char* argv[]){
             std::cout << "Start fine-tuning" << std::endl;
             dbn->fine_tune(training_images, labels, 5, 1000);
 
-            std::ofstream os("dbn.dat", std::ofstream::binary);
+            std::ofstream os("dbn_gray.dat", std::ofstream::binary);
             dbn->store(os);
         }
 
