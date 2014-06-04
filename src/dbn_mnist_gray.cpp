@@ -32,6 +32,8 @@ void test_all(DBN& dbn, std::vector<vector<double>>& training_images, const std:
     auto test_images = mnist::read_test_images<std::vector, vector, double>();
     auto test_labels = mnist::read_test_labels<std::vector>();
 
+    normalize_each(test_images);
+
     if(test_images.empty() || test_labels.empty()){
         std::cout << "Impossible to read test set" << std::endl;
         return;
@@ -48,11 +50,29 @@ void test_all(DBN& dbn, std::vector<vector<double>>& training_images, const std:
     std::cout << "\tError rate (normal): " << 100.0 * error_rate << std::endl;
 }
 
+template<typename DBN, typename Image>
+void display(const DBN& dbn, const Image& image){
+    auto weights = dbn->predict_weights(image);
+
+    for(std::size_t i = 0; i < 28; ++i){
+        for(std::size_t j = 0; j < 28; ++j){
+            std::cout << (image[i * 28 + j] * 255.0 > 10.0 ? 1.0 : 0.0) << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "Activation probabilities" << std::endl;
+    for(std::size_t i = 0; i < 10; ++i){
+        std::cout << i << ":" << weights[i] << std::endl;
+    }
+}
+
 } //end of anonymous namespace
 
 int main(int argc, char* argv[]){
     auto simple = false;
     auto load = false;
+    auto prob = false;
 
     for(int i = 1; i < argc; ++i){
         std::string command(argv[i]);
@@ -63,6 +83,11 @@ int main(int argc, char* argv[]){
 
         if(command == "load"){
             load = true;
+        }
+
+        if(command == "prob"){
+            load = true;
+            prob = true;
         }
     }
 
@@ -90,8 +115,8 @@ int main(int argc, char* argv[]){
         typedef dbn::dbn<
             dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 100>,
             //dbn::layer<dbn::conf<true, 100, false, true>, 300, 300>,
-            dbn::layer<dbn::conf<true, 100, false, true>, 100, 100>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::EXP>, 100, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, false, true>, 100, 200>,
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::EXP>, 200, 10>> dbn_t;
 
         auto labels = dbn::make_fake(training_labels);
 
@@ -109,13 +134,20 @@ int main(int argc, char* argv[]){
             dbn->pretrain(training_images, 5);
 
             std::cout << "Start fine-tuning" << std::endl;
-            dbn->fine_tune(training_images, labels, 5, 1000);
+            dbn->fine_tune(training_images, labels, 2, 1000);
 
             std::ofstream os("dbn_gray.dat", std::ofstream::binary);
             dbn->store(os);
         }
 
-        test_all(dbn, training_images, training_labels, dbn::predictor());
+        if(prob){
+            display(dbn, training_images[666]);
+            display(dbn, training_images[1024]);
+
+            test_all(dbn, training_images, training_labels, dbn::predictor());
+        } else {
+            test_all(dbn, training_images, training_labels, dbn::predictor());
+        }
     }
 
     return 0;
