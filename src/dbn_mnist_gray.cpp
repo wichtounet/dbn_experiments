@@ -36,6 +36,40 @@ void binarize_each(Container& values, double threshold = 30.0){
     }
 }
 
+template<typename Container>
+double mean(const Container& container){
+    double mean = 0.0;
+    for(auto& value : container){
+        mean += value;
+    }
+    return mean / container.size();
+}
+
+template<typename Container>
+double stddev(const Container& container, double mean){
+    double std = 0.0;
+    for(auto& value : container){
+        std += (value - mean) * (value - mean);
+    }
+    return std::sqrt(std / container.size());
+}
+
+template<typename Container>
+void normalize(Container& values){
+    for(auto& vec : values){
+        //zero-mean
+        auto m = mean(vec);
+        for(auto& v : vec){
+            v -= m;
+        }
+        //unit variance
+        auto s = stddev(vec, 0.0);
+        for(auto& v : vec){
+            v /= s;
+        }
+    }
+}
+
 template<typename DBN, typename Dataset, typename P>
 void test_all(DBN& dbn, Dataset& dataset, P&& predictor){
     std::cout << "Start testing" << std::endl;
@@ -99,8 +133,8 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    scale_each(dataset.training_images);
-    scale_each(dataset.test_images);
+    normalize(dataset.training_images);
+    normalize(dataset.test_images);
 
     if(simple){
         typedef dbn::dbn<
