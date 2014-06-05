@@ -118,7 +118,7 @@ int main(int argc, char* argv[]){
             dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 500>,
             dbn::layer<dbn::conf<true, 100, false, true>, 500, 500>,
             dbn::layer<dbn::conf<true, 100, false, true>, 500, 2000>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SOFTMAX>, 2000, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SOFTMAX>, 2000, 10>> dbn_t;
 
         auto labels = dbn::make_fake(dataset.training_labels);
 
