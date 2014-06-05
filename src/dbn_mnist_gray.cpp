@@ -6,6 +6,7 @@
 //=======================================================================
 
 #include <iostream>
+#include <iomanip>
 #include <memory>
 
 #include "dbn/dbn.hpp"
@@ -137,21 +138,29 @@ void errors(const DBN& dbn, Images& images, Labels& labels){
         }
     }
 
-    std::cout << "There were " << errors << "errors  / " << images.size() << std::endl;
-    std::cout << "Second guess was right " << second_errors << " / " << images.size() << std::endl;
+    std::cout << "Error rate " << 100.0 * (static_cast<double>(errors) / images.size()) << std::endl;
+    std::cout << errors << " errors " << " / " << images.size() << std::endl;
     std::cout << "Second guess error rate " << 100.0 * ((static_cast<double>(errors) - second_errors) / images.size()) << std::endl;
+    std::cout << "Second guess was right " << second_errors << " / " << images.size() << std::endl;
 
+    std::cout << "Errors sources: ";
     for(std::size_t i = 0; i < 10; ++i){
-        for(std::size_t j = 0; j < 10; ++j){
-            std::cout << types[i * 10 + j] << " ";
-        }
-        std::cout << std::endl;
+        std::cout << i << ":" << sources[i] << " ";
     }
-
     std::cout << std::endl;
 
+    std::cout << "Error matrix" << std::endl;
+    std::cout << "   ";
     for(std::size_t i = 0; i < 10; ++i){
-        std::cout << sources[i] << " ";
+        std::cout << std::setw(3) << i << " ";
+    }
+    std::cout << std::endl;
+    for(std::size_t i = 0; i < 10; ++i){
+        std::cout << i << ": ";
+        for(std::size_t j = 0; j < 10; ++j){
+            std::cout << std::setw(3) << types[i * 10 + j] << " ";
+        }
+        std::cout << std::endl;
     }
     std::cout << std::endl;
 }
@@ -237,13 +246,11 @@ int main(int argc, char* argv[]){
             display(dbn, dataset.training_images[1024]);
             display(dbn, dataset.training_images[2048]);
 
-            std::cout << std::endl << "Error on training dataset" << std::endl;
+            std::cout << std::endl << "Results on training dataset" << std::endl;
             errors(dbn, dataset.training_images, dataset.training_labels);
 
-            std::cout << std::endl << "Error on test dataset" << std::endl;
+            std::cout << std::endl << "Results on test dataset" << std::endl;
             errors(dbn, dataset.test_images, dataset.test_labels);
-
-            test_all(dbn, dataset, dbn::predictor());
         } else {
             test_all(dbn, dataset, dbn::predictor());
         }
