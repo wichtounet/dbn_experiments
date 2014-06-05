@@ -23,6 +23,7 @@ void normalize_each(Container& values){
     for(auto& vec : values){
         for(auto& v : vec){
             v /= 255.0;
+//            v = v > 30.0 ? 1.0 : 0.0;
         }
     }
 }
@@ -41,11 +42,11 @@ void test_all(DBN& dbn, std::vector<vector<double>>& training_images, const std:
 
     std::cout << "Start testing" << std::endl;
 
-    std::cout << "Training Set" << std::endl;
+    std::cout << "Training Set (" << training_images.size() << ")" << std::endl;
     auto error_rate = dbn::test_set(dbn, training_images, training_labels, predictor);
     std::cout << "\tError rate (normal): " << 100.0 * error_rate << std::endl;
 
-    std::cout << "Test Set" << std::endl;
+    std::cout << "Test Set (" << test_images.size() << ")" << std::endl;
     error_rate =  dbn::test_set(dbn, test_images, test_labels, predictor);
     std::cout << "\tError rate (normal): " << 100.0 * error_rate << std::endl;
 }
@@ -115,10 +116,10 @@ int main(int argc, char* argv[]){
         test_all(dbn, training_images, training_labels, dbn::label_predictor());
     } else {
         typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 100>,
-            //dbn::layer<dbn::conf<true, 100, false, true>, 300, 300>,
-            dbn::layer<dbn::conf<true, 100, false, true>, 100, 200>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SOFTMAX>, 200, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 500>,
+            dbn::layer<dbn::conf<true, 100, false, true>, 500, 500>,
+            dbn::layer<dbn::conf<true, 100, false, true>, 500, 2000>,
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SOFTMAX>, 2000, 10>> dbn_t;
 
         auto labels = dbn::make_fake(training_labels);
 
@@ -136,7 +137,7 @@ int main(int argc, char* argv[]){
             dbn->pretrain(training_images, 5);
 
             std::cout << "Start fine-tuning" << std::endl;
-            dbn->fine_tune(training_images, labels, 2, 1000);
+            dbn->fine_tune(training_images, labels, 5, 1000);
 
             std::ofstream os("dbn_gray.dat", std::ofstream::binary);
             dbn->store(os);
