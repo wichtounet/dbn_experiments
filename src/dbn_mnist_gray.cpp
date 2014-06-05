@@ -102,6 +102,60 @@ void display(const DBN& dbn, const Image& image){
     std::cout  << "Answer" << dbn->predict(image) << std::endl;
 }
 
+template<typename DBN, typename Images, typename Labels>
+void errors(const DBN& dbn, Images& images, Labels& labels){
+    std::size_t types[100];
+    std::size_t sources[10];
+    std::size_t errors = 0;
+    std::size_t second_errors = 0;
+
+    std::fill(&types[0], &types[100], 0);
+    std::fill(&sources[0], &sources[10], 0);
+
+    for(std::size_t i = 0; i < images.size(); ++i){
+        auto predicted = dbn->predict(images[i]);
+
+        if(predicted != labels[i]){
+            auto weights = dbn->predict_weights(images[i]);
+            auto max = 0.0;
+            auto second = 0;
+
+            for(std::size_t j = 0; j < weights.size(); ++j){
+                if(j != predicted && weights[j] > max){
+                    second = j;
+                    max = weights[j];
+                }
+            }
+
+            if(second == labels[i]){
+                ++second_errors;
+            }
+
+            ++errors;
+            ++types[labels[i] * 10 + predicted];
+            ++sources[labels[i]];
+        }
+    }
+
+    std::cout << "There were " << errors << "errors  / " << images.size() << std::endl;
+    std::cout << "Second guess was right " << second_errors << " / " << images.size() << std::endl;
+    std::cout << "Second guess error rate " << 100.0 * ((static_cast<double>(errors) - second_errors) / images.size()) << std::endl;
+
+    for(std::size_t i = 0; i < 10; ++i){
+        for(std::size_t j = 0; j < 10; ++j){
+            std::cout << types[i * 10 + j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << std::endl;
+
+    for(std::size_t i = 0; i < 10; ++i){
+        std::cout << sources[i] << " ";
+    }
+    std::cout << std::endl;
+}
+
 } //end of anonymous namespace
 
 int main(int argc, char* argv[]){
@@ -149,10 +203,10 @@ int main(int argc, char* argv[]){
         test_all(dbn, dataset, dbn::label_predictor());
     } else {
         typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 500>,
-            dbn::layer<dbn::conf<true, 100, false, true>, 500, 500>,
-            dbn::layer<dbn::conf<true, 100, false, true>, 500, 2000>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SOFTMAX>, 2000, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, true, true, true, dbn::Type::GAUSSIAN>, 28 * 28, 200>,
+            dbn::layer<dbn::conf<true, 100, false, true>, 200, 200>,
+            //dbn::layer<dbn::conf<true, 100, false, true>, 500, 2000>,
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SOFTMAX>, 200, 10>> dbn_t;
 
         auto labels = dbn::make_fake(dataset.training_labels);
 
@@ -167,10 +221,10 @@ int main(int argc, char* argv[]){
             dbn->load(is);
         } else {
             std::cout << "Start pretraining" << std::endl;
-            dbn->pretrain(dataset.training_images, 5);
+            dbn->pretrain(dataset.training_images, 10);
 
             std::cout << "Start fine-tuning" << std::endl;
-            dbn->fine_tune(dataset.training_images, labels, 5, 1000);
+            dbn->fine_tune(dataset.training_images, labels, 1, 1000);
 
             std::ofstream os("dbn_gray.dat", std::ofstream::binary);
             dbn->store(os);
@@ -181,6 +235,13 @@ int main(int argc, char* argv[]){
             display(dbn, dataset.training_images[512]);
             display(dbn, dataset.training_images[666]);
             display(dbn, dataset.training_images[1024]);
+            display(dbn, dataset.training_images[2048]);
+
+            std::cout << std::endl << "Error on training dataset" << std::endl;
+            errors(dbn, dataset.training_images, dataset.training_labels);
+
+            std::cout << std::endl << "Error on test dataset" << std::endl;
+            errors(dbn, dataset.test_images, dataset.test_labels);
 
             test_all(dbn, dataset, dbn::predictor());
         } else {
