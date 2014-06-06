@@ -19,7 +19,7 @@ NONEXEC_CPP_FILES := $(filter-out src/fast_vector_test.cpp,$(NONEXEC_CPP_FILES))
 NON_EXEC_DEBUG_O_FILES=$(NONEXEC_CPP_FILES:%.cpp=debug/%.cpp.o)
 NON_EXEC_RELEASE_O_FILES=$(NONEXEC_CPP_FILES:%.cpp=release/%.cpp.o)
 
-CC=clang++
+CXX=clang++
 LD=clang++
 
 WARNING_FLAGS=-Wextra -Wall -Qunused-arguments -Wuninitialized -Wsometimes-uninitialized -Wno-long-long -Winit-self -Wdocumentation
@@ -31,11 +31,11 @@ RELEASE_FLAGS=-g -DNDEBUG -Ofast -march=native -fvectorize -fslp-vectorize-aggre
 
 debug/src/%.cpp.o: src/%.cpp
 	@ mkdir -p debug/src/
-	$(CC) $(CXX_FLAGS) $(DEBUG_FLAGS) -o $@ -c $<
+	$(CXX) $(CXX_FLAGS) $(DEBUG_FLAGS) -o $@ -c $<
 
 release/src/%.cpp.o: src/%.cpp
 	@ mkdir -p release/src/
-	$(CC) $(CXX_FLAGS) $(RELEASE_FLAGS) -o $@ -c $<
+	$(CXX) $(CXX_FLAGS) $(RELEASE_FLAGS) -o $@ -c $<
 
 debug/bin/%: debug/src/%.cpp.o $(NON_EXEC_DEBUG_O_FILES)
 	@ mkdir -p debug/bin/
@@ -47,11 +47,11 @@ release/bin/%: release/src/%.cpp.o $(NON_EXEC_RELEASE_O_FILES)
 
 debug/src/%.cpp.d: $(CPP_FILES)
 	@ mkdir -p debug/src/
-	@ $(CC) $(CXX_FLAGS) $(DEBUG_FLAGS) -MM -MT debug/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
+	@ $(CXX) $(CXX_FLAGS) $(DEBUG_FLAGS) -MM -MT debug/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
 
 release/src/%.cpp.d: $(CPP_FILES)
 	@ mkdir -p release/src/
-	@ $(CC) $(CXX_FLAGS) $(RELEASE_FLAGS) -MM -MT release/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
+	@ $(CXX) $(CXX_FLAGS) $(RELEASE_FLAGS) -MM -MT release/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
 
 release: release/bin/rbm_simple release/bin/rbm_mnist release/bin/dbn_mnist release/bin/dbn_mnist_gray release/bin/fast_vector_test
 debug: debug/bin/rbm_simple debug/bin/rbm_mnist debug/bin/dbn_mnist debug/bin/dbn_mnist_gray debug/bin/fast_vector_test
