@@ -59,7 +59,7 @@ debug: debug/bin/rbm_simple debug/bin/rbm_mnist debug/bin/dbn_mnist debug/bin/db
 all: release debug
 
 sonar: release
-	cppcheck --xml-version=2 --enable=all --std=c++11 src > cppcheck_report.xml
+	cppcheck --xml-version=2 --enable=all --std=c++11 src 2> cppcheck_report.xml
 	/opt/sonar-runner/bin/sonar-runner
 
 clean:
