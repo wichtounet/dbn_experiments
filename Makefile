@@ -23,7 +23,7 @@ CXX=clang++
 LD=clang++
 
 WARNING_FLAGS=-Wextra -Wall -Qunused-arguments -Wuninitialized -Wsometimes-uninitialized -Wno-long-long -Winit-self -Wdocumentation
-CXX_FLAGS=-Idbn/include -Imnist/include -std=c++1y -stdlib=libc++ $(WARNING_FLAGS)
+CXX_FLAGS=-Idbn/include -Imnist/include -Iinclude -std=c++1y -stdlib=libc++ $(WARNING_FLAGS)
 LD_FLAGS=$(CXX_FLAGS)
 
 DEBUG_FLAGS=-g

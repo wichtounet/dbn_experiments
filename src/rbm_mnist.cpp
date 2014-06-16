@@ -13,18 +13,7 @@
 
 #include "mnist/mnist_reader.hpp"
 
-namespace {
-
-template<typename Container>
-void binarize_each(Container& values){
-    for(auto& vec : values){
-        for(auto& v : vec){
-            v = v > 10.0 ? 1.0 : 0.0;
-        }
-    }
-}
-
-} //end of anonymous namespace
+#include "utils.hpp"
 
 int main(int argc, char* argv[]){
     auto reconstruction = false;
@@ -42,7 +31,9 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dbn::rbm<dbn::layer<dbn::conf<true, 50>, 28 * 28, 100>> rbm;
+    dbn::rbm<dbn::layer<
+        dbn::conf<true, 50, true, false, true, dbn::Type::SIGMOID, dbn::Type::RLU>, 
+        28 * 28, 100>> rbm;
 
     auto training_images = mnist::read_training_images<std::vector, vector, double>();
 

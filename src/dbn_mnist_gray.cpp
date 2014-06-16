@@ -17,59 +17,9 @@
 
 #include "mnist/mnist_reader.hpp"
 
+#include "utils.hpp"
+
 namespace {
-
-template<typename Container>
-void scale_each(Container& values){
-    for(auto& vec : values){
-        for(auto& v : vec){
-            v /= 255.0;
-        }
-    }
-}
-
-template<typename Container>
-void binarize_each(Container& values, double threshold = 30.0){
-    for(auto& vec : values){
-        for(auto& v : vec){
-            v = v > threshold ? 1.0 : 0.0;
-        }
-    }
-}
-
-template<typename Container>
-double mean(const Container& container){
-    double mean = 0.0;
-    for(auto& value : container){
-        mean += value;
-    }
-    return mean / container.size();
-}
-
-template<typename Container>
-double stddev(const Container& container, double mean){
-    double std = 0.0;
-    for(auto& value : container){
-        std += (value - mean) * (value - mean);
-    }
-    return std::sqrt(std / container.size());
-}
-
-template<typename Container>
-void normalize(Container& values){
-    for(auto& vec : values){
-        //zero-mean
-        auto m = mean(vec);
-        for(auto& v : vec){
-            v -= m;
-        }
-        //unit variance
-        auto s = stddev(vec, 0.0);
-        for(auto& v : vec){
-            v /= s;
-        }
-    }
-}
 
 template<typename DBN, typename Dataset, typename P>
 void test_all(DBN& dbn, Dataset& dataset, P&& predictor){
@@ -219,7 +169,7 @@ int main(int argc, char* argv[]){
 
         auto labels = dbn::make_fake(dataset.training_labels);
 
-        auto dbn = make_unique<dbn_t>();
+        auto dbn = std::make_unique<dbn_t>();
 
         dbn->display();
 
