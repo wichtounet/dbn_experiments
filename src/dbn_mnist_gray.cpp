@@ -162,14 +162,16 @@ int main(int argc, char* argv[]){
         test_all(dbn, dataset, dbn::label_predictor());
     } else {
         typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 100, true, true, true, dbn::Type::GAUSSIAN, dbn::Type::NRLU>, 28 * 28, 500>,
-            //dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SIGMOID>, 100, 100>,
+            dbn::layer<dbn::conf<true, 100, true, true, false, dbn::Type::GAUSSIAN, dbn::Type::NRLU>, 28 * 28, 300>,
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SIGMOID>, 300, 300>,
             //dbn::layer<dbn::conf<true, 100, false, true>, 400, 1100>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SOFTMAX>, 500, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SOFTMAX>, 300, 10>> dbn_t;
 
         auto labels = dbn::make_fake(dataset.training_labels);
 
         auto dbn = std::make_unique<dbn_t>();
+
+        dbn->debug_cg = true;
 
         dbn->display();
 
@@ -180,7 +182,7 @@ int main(int argc, char* argv[]){
             dbn->load(is);
         } else {
             std::cout << "Start pretraining" << std::endl;
-            dbn->pretrain(dataset.training_images, 10);
+            dbn->pretrain(dataset.training_images, 20);
 
             std::cout << "Start fine-tuning" << std::endl;
             dbn->fine_tune(dataset.training_images, labels, 2, 1000);
