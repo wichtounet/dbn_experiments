@@ -77,9 +77,9 @@ int main(int argc, char* argv[]){
 
     if(simple){
         typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 50, true>, 28 * 28, 50>,
-            dbn::layer<dbn::conf<true, 50, false>, 50, 50>,
-            dbn::layer<dbn::conf<true, 50, false>, 60, 100>> dbn_simple_t;
+            dbn::layer<dbn::conf<true, 50, true>, 28 * 28, 100>,
+            dbn::layer<dbn::conf<true, 50, false>, 100, 100>,
+            dbn::layer<dbn::conf<true, 50, false>, 110, 200>> dbn_simple_t;
 
         auto dbn = std::make_shared<dbn_simple_t>();
 
