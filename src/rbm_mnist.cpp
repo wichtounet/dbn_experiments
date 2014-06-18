@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
     }
 
     dbn::rbm<dbn::layer<
-        dbn::conf<true, 50, true, false, true, dbn::Type::SIGMOID, dbn::Type::RLU>, 
+        dbn::conf<true, 50, true, false, true, dbn::Type::SIGMOID, dbn::Type::NRLU>,
         28 * 28, 100>> rbm;
 
     auto training_images = mnist::read_training_images<std::vector, vector, double>();
