@@ -162,10 +162,10 @@ int main(int argc, char* argv[]){
         test_all(dbn, dataset, dbn::label_predictor());
     } else {
         typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 100, true, true, false, dbn::Type::GAUSSIAN, dbn::Type::NRLU>, 28 * 28, 300>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SIGMOID>, 300, 300>,
+            dbn::layer<dbn::conf<true, 100, true, true, dbn::DecayType::NONE, dbn::Type::GAUSSIAN, dbn::Type::NRLU>, 28 * 28, 300>,
+            dbn::layer<dbn::conf<true, 100, false, true, dbn::DecayType::L2, dbn::Type::SIGMOID, dbn::Type::SIGMOID>, 300, 300>,
             //dbn::layer<dbn::conf<true, 100, false, true>, 400, 1100>,
-            dbn::layer<dbn::conf<true, 100, false, true, true, dbn::Type::SIGMOID, dbn::Type::SOFTMAX>, 300, 10>> dbn_t;
+            dbn::layer<dbn::conf<true, 100, false, true, dbn::DecayType::L2, dbn::Type::SIGMOID, dbn::Type::SOFTMAX>, 300, 10>> dbn_t;
 
         auto labels = dbn::make_fake(dataset.training_labels);
 
