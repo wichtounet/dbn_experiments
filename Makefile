@@ -10,7 +10,6 @@ RELEASE_D_FILES=$(CPP_FILES:%.cpp=release/%.cpp.d)
 DEBUG_O_FILES=$(CPP_FILES:%.cpp=debug/%.cpp.o)
 RELEASE_O_FILES=$(CPP_FILES:%.cpp=release/%.cpp.o)
 
-NONEXEC_CPP_FILES := $(filter-out src/rbm_simple.cpp,$(CPP_FILES))
 NONEXEC_CPP_FILES := $(filter-out src/rbm_mnist.cpp,$(NONEXEC_CPP_FILES))
 NONEXEC_CPP_FILES := $(filter-out src/dbn_mnist.cpp,$(NONEXEC_CPP_FILES))
 NONEXEC_CPP_FILES := $(filter-out src/dbn_mnist_gray.cpp,$(NONEXEC_CPP_FILES))
@@ -23,7 +22,7 @@ CXX=clang++
 LD=clang++
 
 WARNING_FLAGS=-Wextra -Wall -Qunused-arguments -Wuninitialized -Wsometimes-uninitialized -Wno-long-long -Winit-self -Wdocumentation
-CXX_FLAGS=-Idbn/include -Imnist/include -Iinclude -std=c++1y -stdlib=libc++ $(WARNING_FLAGS)
+CXX_FLAGS=-Idbn/include -Idbn/etl/include -Imnist/include -Iinclude -std=c++1y -stdlib=libc++ $(WARNING_FLAGS)
 LD_FLAGS=$(CXX_FLAGS)
 
 DEBUG_FLAGS=-g
@@ -53,8 +52,8 @@ release/src/%.cpp.d: $(CPP_FILES)
 	@ mkdir -p release/src/
 	@ $(CXX) $(CXX_FLAGS) $(RELEASE_FLAGS) -MM -MT release/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
 
-release: release/bin/rbm_simple release/bin/rbm_mnist release/bin/dbn_mnist release/bin/dbn_mnist_gray release/bin/fast_vector_test
-debug: debug/bin/rbm_simple debug/bin/rbm_mnist debug/bin/dbn_mnist debug/bin/dbn_mnist_gray debug/bin/fast_vector_test
+release: release/bin/rbm_mnist release/bin/dbn_mnist release/bin/dbn_mnist_gray release/bin/fast_vector_test
+debug: debug/bin/rbm_mnist debug/bin/dbn_mnist debug/bin/dbn_mnist_gray debug/bin/fast_vector_test
 
 all: release debug
 

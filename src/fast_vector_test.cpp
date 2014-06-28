@@ -5,7 +5,7 @@
 //  http://opensource.org/licenses/MIT)
 //=======================================================================
 
-#include "dbn/fast_vector.hpp"
+#include "etl/fast_vector.hpp"
 
 #include <iostream>
 
