@@ -10,14 +10,14 @@
 #include <iostream>
 
 int main(){
-    fast_vector<double, 3> a(1.0);
-    auto e = a + fast_vector<double, 3>(2.0) + fast_vector<double, 3>(4.0) + fast_vector<double, 3>(3.0);
+    etl::fast_vector<double, 3> a(1.0);
+    auto e = a + etl::fast_vector<double, 3>(2.0) + etl::fast_vector<double, 3>(4.0) + etl::fast_vector<double, 3>(3.0);
 
     std::cout << e[2] << std::endl;
 
-    auto f = (fast_vector<double, 3>(1.33) * 2.0) * 9.0 * fast_vector<double, 3>(9.23);
+    auto f = (etl::fast_vector<double, 3>(1.33) * 2.0) * 9.0 * etl::fast_vector<double, 3>(9.23);
 
-   std::cout << f[2] << std::endl;
+    std::cout << f[2] << std::endl;
 
     return 0;
 }

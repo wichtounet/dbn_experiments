@@ -39,11 +39,11 @@ void test_all(DBN& dbn, std::vector<vector<double>>& training_images, const std:
     std::cout << "Start testing" << std::endl;
 
     std::cout << "Training Set" << std::endl;
-    auto error_rate = dbn::test_set(dbn, training_images, training_labels, predictor);
+    auto error_rate = dll::test_set(dbn, training_images, training_labels, predictor);
     std::cout << "\tError rate (normal): " << 100.0 * error_rate << std::endl;
 
     std::cout << "Test Set" << std::endl;
-    error_rate =  dbn::test_set(dbn, test_images, test_labels, predictor);
+    error_rate =  dll::test_set(dbn, test_images, test_labels, predictor);
     std::cout << "\tError rate (normal): " << 100.0 * error_rate << std::endl;
 }
 
@@ -75,24 +75,23 @@ int main(int argc, char* argv[]){
     binarize_each(training_images);
 
     if(simple){
-        typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 50, true, false, dbn::DecayType::L2>, 28 * 28, 100>,
-            dbn::layer<dbn::conf<true, 50, false, false, dbn::DecayType::L2>, 100, 100>,
-            dbn::layer<dbn::conf<true, 50, false, false, dbn::DecayType::L2>, 110, 200>> dbn_simple_t;
+        typedef dll::dbn<
+            dll::layer<28 * 28, 100, dll::in_dbn, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::DecayType::L2>>,
+            dll::layer<100, 100, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::DecayType::L2>>,
+            dll::layer<110, 200, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::DecayType::L2>>> dbn_simple_t;
 
         auto dbn = std::make_shared<dbn_simple_t>();
 
         dbn->train_with_labels(training_images, training_labels, 10, 5);
 
-        test_all(dbn, training_images, training_labels, dbn::label_predictor());
+        test_all(dbn, training_images, training_labels, dll::label_predictor());
     } else {
-        typedef dbn::dbn<
-            dbn::layer<dbn::conf<true, 100, true, true>, 28 * 28, 30>,
-            //dbn::layer<dbn::conf<true, 100, false, true>, 300, 300>,
-            dbn::layer<dbn::conf<true, 100, false, true>, 30, 30>,
-            dbn::layer<dbn::conf<true, 100, false, true, dbn::DecayType::L2, dbn::Type::SIGMOID, dbn::Type::EXP>, 30, 10>> dbn_t;
+        typedef dll::dbn<
+            dll::layer<28 * 28, 30, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::init_weights>,
+            dll::layer<30, 30, dll::in_dbn, dll::momentum, dll::batch_size<100>>,
+            dll::layer<30, 10, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::hidden_unit<dll::Type::EXP>>> dbn_t;
 
-        auto labels = dbn::make_fake(training_labels);
+        auto labels = dll::make_fake(training_labels);
 
         auto dbn = make_unique<dbn_t>();
 
@@ -114,7 +113,7 @@ int main(int argc, char* argv[]){
             dbn->store(os);
         }
 
-        test_all(dbn, training_images, training_labels, dbn::predictor());
+        test_all(dbn, training_images, training_labels, dll::predictor());
     }
 
     return 0;

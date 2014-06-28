@@ -30,9 +30,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dbn::rbm<dbn::layer<
-        dbn::conf<true, 50, true, false, dbn::DecayType::L2, dbn::Type::SIGMOID, dbn::Type::NRLU>,
-        28 * 28, 100>> rbm;
+    dll::rbm<dll::layer<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights, dll::weight_decay<dll::DecayType::L2>, dll::hidden_unit<dll::Type::NRLU>>> rbm;
 
     auto training_images = mnist::read_training_images<std::vector, vector, double>();
 
