@@ -7,9 +7,8 @@
 
 #include <iostream>
 
-#include "dbn/rbm.hpp"
-#include "dbn/layer.hpp"
-#include "dbn/conf.hpp"
+#include "dll/rbm.hpp"
+#include "dll/layer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 

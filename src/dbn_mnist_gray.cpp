@@ -9,11 +9,10 @@
 #include <iomanip>
 #include <memory>
 
-#include "dbn/dbn.hpp"
-#include "dbn/layer.hpp"
-#include "dbn/conf.hpp"
-#include "dbn/labels.hpp"
-#include "dbn/test.hpp"
+#include "dll/dbn.hpp"
+#include "dll/layer.hpp"
+#include "dll/labels.hpp"
+#include "dll/test.hpp"
 
 #include "mnist/mnist_reader.hpp"
 
