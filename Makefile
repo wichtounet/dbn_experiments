@@ -14,6 +14,7 @@ NONEXEC_CPP_FILES := $(filter-out src/rbm_mnist.cpp,$(NONEXEC_CPP_FILES))
 NONEXEC_CPP_FILES := $(filter-out src/dbn_mnist.cpp,$(NONEXEC_CPP_FILES))
 NONEXEC_CPP_FILES := $(filter-out src/dbn_mnist_gray.cpp,$(NONEXEC_CPP_FILES))
 NONEXEC_CPP_FILES := $(filter-out src/fast_vector_test.cpp,$(NONEXEC_CPP_FILES))
+NONEXEC_CPP_FILES := $(filter-out src/crbm_mnist.cpp,$(NONEXEC_CPP_FILES))
 
 NON_EXEC_DEBUG_O_FILES=$(NONEXEC_CPP_FILES:%.cpp=debug/%.cpp.o)
 NON_EXEC_RELEASE_O_FILES=$(NONEXEC_CPP_FILES:%.cpp=release/%.cpp.o)
@@ -52,8 +53,8 @@ release/src/%.cpp.d: $(CPP_FILES)
 	@ mkdir -p release/src/
 	@ $(CXX) $(CXX_FLAGS) $(RELEASE_FLAGS) -MM -MT release/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
 
-release: release/bin/rbm_mnist release/bin/dbn_mnist release/bin/dbn_mnist_gray release/bin/fast_vector_test
-debug: debug/bin/rbm_mnist debug/bin/dbn_mnist debug/bin/dbn_mnist_gray debug/bin/fast_vector_test
+release: release/bin/rbm_mnist release/bin/dbn_mnist release/bin/dbn_mnist_gray release/bin/fast_vector_test release/bin/crbm_mnist
+debug: debug/bin/rbm_mnist debug/bin/dbn_mnist debug/bin/dbn_mnist_gray debug/bin/fast_vector_test debug/bin/crbm_mnist
 
 all: release debug
 
