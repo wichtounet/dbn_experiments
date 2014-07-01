@@ -8,6 +8,8 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
+#include <cmath>
+
 template<typename Container>
 void scale_each(Container& values){
     for(auto& vec : values){
