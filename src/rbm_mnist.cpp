@@ -9,6 +9,7 @@
 
 #include "dll/rbm.hpp"
 #include "dll/layer.hpp"
+#include "dll/generic_trainer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 
@@ -31,11 +32,11 @@ int main(int argc, char* argv[]){
     }
 
     dll::rbm<dll::layer<
-            28 * 28, 100, 
-            dll::momentum, 
-            dll::batch_size<50>, 
-            dll::init_weights, 
-            dll::weight_decay<dll::DecayType::L2>, 
+            28 * 28, 100,
+            dll::momentum,
+            dll::batch_size<50>,
+            dll::init_weights,
+            dll::weight_decay<dll::DecayType::L2>,
             dll::hidden_unit<dll::Type::NRLU>>> rbm;
 
     auto training_images = mnist::read_training_images<std::vector, vector, double>();

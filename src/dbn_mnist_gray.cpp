@@ -13,6 +13,7 @@
 #include "dll/layer.hpp"
 #include "dll/labels.hpp"
 #include "dll/test.hpp"
+#include "dll/generic_trainer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 
