@@ -41,13 +41,13 @@ int main(int argc, char* argv[]){
     binarize_each(training_images);
 
     if(load){
-        std::ifstream is("rbm-1.dat", std::ofstream::binary);
-        //TODO rbm.load(is);
+        std::ifstream is("crbm-1.dat", std::ofstream::binary);
+        rbm.load(is);
     } else {
         rbm.train(training_images, 1);
 
-        std::ofstream os("rbm-1.dat", std::ofstream::binary);
-        //TODO rbm.store(os);
+        std::ofstream os("crbm-1.dat", std::ofstream::binary);
+        rbm.store(os);
     }
 
     if(reconstruction){
@@ -65,10 +65,10 @@ int main(int argc, char* argv[]){
                 std::cout << std::endl;
             }
 
-            //rbm.reconstruct(image);
+            rbm.reconstruct(image);
 
             std::cout << "Reconstructed image" << std::endl;
-            //TODO rbm.display_visible_units(28);
+            rbm.display_visible_units(28);
         }
     }
 
