@@ -44,7 +44,8 @@ int main(int argc, char* argv[]){
         std::ifstream is("crbm-1.dat", std::ofstream::binary);
         rbm.load(is);
     } else {
-        rbm.train(training_images, 1);
+        rbm.learning_rate = 1e-4;
+        rbm.train(training_images, 2);
 
         std::ofstream os("crbm-1.dat", std::ofstream::binary);
         rbm.store(os);
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]){
         binarize_each(test_images);
 
         for(size_t t = 0; t < 10; ++t){
-            auto& image = test_images[666 + t];
+            auto& image = training_images[666 + t];
 
             std::cout << "Source image" << std::endl;
             for(size_t i = 0; i < 28; ++i){
@@ -68,7 +69,7 @@ int main(int argc, char* argv[]){
             rbm.reconstruct(image);
 
             std::cout << "Reconstructed image" << std::endl;
-            rbm.display_visible_units(28);
+            rbm.display_visible_unit_samples();
         }
     }
 
