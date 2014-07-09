@@ -36,8 +36,8 @@ int main(int argc, char* argv[]){
             dll::momentum,
             dll::batch_size<50>,
             dll::init_weights,
-            dll::weight_decay<dll::DecayType::L2>,
-            dll::hidden_unit<dll::Type::NRLU>>> rbm;
+            dll::weight_decay<dll::decay_type::L2>,
+            dll::hidden<dll::unit_type::NRLU>>> rbm;
 
     auto training_images = mnist::read_training_images<std::vector, vector, double>();
 

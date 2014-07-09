@@ -44,8 +44,8 @@ int main(int argc, char* argv[]){
     dll::conv_rbm_mp<dll::conv_mp_layer<
             28, 12, 8, 2,
             dll::batch_size<25>,
-            //dll::weight_decay<dll::DecayType::L1>,
-            dll::visible_unit<dll::Type::SIGMOID>
+            //dll::weight_decay<dll::decay_type::L1>,
+            dll::visible<dll::Type::SIGMOID>
             >> rbm;
 
     auto dataset = mnist::read_dataset<std::vector, vector, double>();

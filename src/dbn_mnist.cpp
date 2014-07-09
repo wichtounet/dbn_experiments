@@ -77,9 +77,9 @@ int main(int argc, char* argv[]){
 
     if(simple){
         typedef dll::dbn<
-            dll::layer<28 * 28, 100, dll::in_dbn, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::DecayType::L2>>,
-            dll::layer<100, 100, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::DecayType::L2>>,
-            dll::layer<110, 200, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::DecayType::L2>>> dbn_simple_t;
+            dll::layer<28 * 28, 100, dll::in_dbn, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>,
+            dll::layer<100, 100, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>,
+            dll::layer<110, 200, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>> dbn_simple_t;
 
         auto dbn = std::make_shared<dbn_simple_t>();
 
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
         typedef dll::dbn<
             dll::layer<28 * 28, 30, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::init_weights>,
             dll::layer<30, 30, dll::in_dbn, dll::momentum, dll::batch_size<100>>,
-            dll::layer<30, 10, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::hidden_unit<dll::Type::EXP>>> dbn_t;
+            dll::layer<30, 10, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::hidden<dll::unit_type::EXP>>> dbn_t;
 
         auto labels = dll::make_fake(training_labels);
 
