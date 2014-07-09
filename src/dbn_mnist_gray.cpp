@@ -162,9 +162,9 @@ int main(int argc, char* argv[]){
         test_all(dbn, dataset, dll::label_predictor());
     } else {
         typedef dll::dbn<
-            dll::layer<28 * 28, 300, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::init_weights, dll::visible<dll::Type::GAUSSIAN>>,
+            dll::layer<28 * 28, 300, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::init_weights, dll::visible<dll::unit_type::GAUSSIAN>>,
             dll::layer<300, 500, dll::in_dbn, dll::momentum, dll::batch_size<100>>,
-            dll::layer<500, 10, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::hidden_unit<dll::unit_type::SOFTMAX>>> dbn_t;
+            dll::layer<500, 10, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::hidden<dll::unit_type::SOFTMAX>>> dbn_t;
 
         auto labels = dll::make_fake(dataset.training_labels);
 

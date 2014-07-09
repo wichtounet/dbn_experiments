@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+#include "etl/print.hpp"
+
 //#include "dll/conv_rbm.hpp"
 //#include "dll/conv_layer.hpp"
 #include "dll/conv_rbm_mp.hpp"
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]){
             28, 12, 8, 2,
             dll::batch_size<25>,
             //dll::weight_decay<dll::decay_type::L1>,
-            dll::visible<dll::Type::SIGMOID>
+            dll::visible<dll::unit_type::BINARY>
             >> rbm;
 
     auto dataset = mnist::read_dataset<std::vector, vector, double>();
