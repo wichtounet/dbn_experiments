@@ -9,10 +9,10 @@
 
 #include "etl/print.hpp"
 
-//#include "dll/conv_rbm.hpp"
-//#include "dll/conv_layer.hpp"
-#include "dll/conv_rbm_mp.hpp"
-#include "dll/conv_mp_layer.hpp"
+#include "dll/conv_rbm.hpp"
+#include "dll/conv_layer.hpp"
+//#include "dll/conv_rbm_mp.hpp"
+//#include "dll/conv_mp_layer.hpp"
 
 #include "dll/vector.hpp"
 #include "dll/generic_trainer.hpp"
@@ -43,8 +43,8 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dll::conv_rbm_mp<dll::conv_mp_layer<
-            28, 12, 8, 2,
+    dll::conv_rbm<dll::conv_layer<
+            28, 12, 8,
             dll::batch_size<25>,
             //dll::weight_decay<dll::decay_type::L1>,
             dll::visible<dll::unit_type::BINARY>
