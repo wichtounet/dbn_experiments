@@ -31,15 +31,14 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dll::rbm<dll::layer<
-            28 * 28, 100,
+    dll::layer<
+            28 * 28, 200,
             dll::momentum,
-            dll::batch_size<50>,
-            dll::init_weights,
-            dll::weight_decay<dll::decay_type::L2>,
-            dll::hidden<dll::unit_type::NRLU>>> rbm;
+            dll::batch_size<25>,
+            dll::hidden<dll::unit_type::RELU>>::rbm_t rbm;
 
     auto training_images = mnist::read_training_images<std::vector, vector, double>();
+    training_images.resize(1000);
 
     binarize_each(training_images);
 
@@ -47,7 +46,7 @@ int main(int argc, char* argv[]){
         std::ifstream is("rbm-1.dat", std::ofstream::binary);
         rbm.load(is);
     } else {
-        rbm.train(training_images, 10);
+        rbm.train(training_images, 100);
 
         std::ofstream os("rbm-1.dat", std::ofstream::binary);
         rbm.store(os);
@@ -58,7 +57,7 @@ int main(int argc, char* argv[]){
         binarize_each(test_images);
 
         for(size_t t = 0; t < 10; ++t){
-            auto& image = test_images[666 + t];
+            auto& image = training_images[6 + t];
 
             std::cout << "Source image" << std::endl;
             for(size_t i = 0; i < 28; ++i){
