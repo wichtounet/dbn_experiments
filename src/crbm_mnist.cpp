@@ -43,12 +43,11 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dll::conv_rbm_mp<dll::conv_mp_layer<
-            28, 12, 40, 2,
-            dll::batch_size<25>,
-            //dll::weight_decay<dll::decay_type::L1>,
-            dll::visible<dll::unit_type::BINARY>
-            >> rbm;
+    dll::conv_mp_layer<
+        28, 12, 40, 2,
+        dll::batch_size<25>,
+        dll::visible<dll::unit_type::BINARY>
+        >::rbm_t rbm;
 
     auto dataset = mnist::read_dataset<std::vector, vector, double>();
 
@@ -61,8 +60,6 @@ int main(int argc, char* argv[]){
 
     binarize_each(dataset.training_images);
     binarize_each(dataset.test_images);
-    //normalize(dataset.training_images);
-    //normalize(dataset.test_images);
 
     if(load){
         std::ifstream is("crbm-1.dat", std::ofstream::binary);
