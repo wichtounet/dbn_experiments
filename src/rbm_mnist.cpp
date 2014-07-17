@@ -8,8 +8,6 @@
 #include <iostream>
 
 #include "dll/rbm.hpp"
-#include "dll/layer.hpp"
-#include "dll/generic_trainer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 

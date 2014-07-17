@@ -9,10 +9,7 @@
 #include <memory>
 
 #include "dll/dbn.hpp"
-#include "dll/layer.hpp"
-#include "dll/labels.hpp"
 #include "dll/test.hpp"
-#include "dll/generic_trainer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
@@ -83,8 +80,6 @@ int main(int argc, char* argv[]){
             dll::layer<100, 200, dll::in_dbn, dll::momentum, dll::batch_size<50>>,
             dll::layer<200, 10, dll::in_dbn, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::EXP>>> dbn_t;
 
-        auto labels = dll::make_fake(dataset.training_labels);
-
         auto dbn = make_unique<dbn_t>();
 
         dbn->display();
@@ -99,7 +94,7 @@ int main(int argc, char* argv[]){
             dbn->pretrain(dataset.training_images, 5);
 
             std::cout << "Start fine-tuning" << std::endl;
-            dbn->fine_tune(dataset.training_images, labels, 5, 1000);
+            dbn->fine_tune(dataset.training_images, dataset.training_labels, 5, 1000);
 
             std::ofstream os("dbn.dat", std::ofstream::binary);
             dbn->store(os);

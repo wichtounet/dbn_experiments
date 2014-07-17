@@ -9,13 +9,10 @@
 
 #include "etl/print.hpp"
 
-//#include "dll/conv_rbm.hpp"
-//#include "dll/conv_layer.hpp"
 #include "dll/conv_rbm_mp.hpp"
 #include "dll/conv_mp_layer.hpp"
 
 #include "dll/vector.hpp"
-#include "dll/generic_trainer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 
