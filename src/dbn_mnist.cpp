@@ -64,10 +64,12 @@ int main(int argc, char* argv[]){
     mnist::binarize_dataset(dataset);
 
     if(simple){
-        typedef dll::dbn<
-            dll::layer<28 * 28, 100, dll::in_dbn, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>,
-            dll::layer<100, 100, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>,
-            dll::layer<110, 200, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>> dbn_simple_t;
+        typedef dll::dbn_desc<
+            dll::dbn_layers<
+                dll::rbm_desc<28 * 28, 100, dll::in_dbn, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+                dll::rbm_desc<100, 100, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+                dll::rbm_desc<110, 200, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+            >> dbn_simple_t;
 
         auto dbn = std::make_shared<dbn_simple_t>();
 
