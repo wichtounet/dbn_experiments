@@ -7,21 +7,21 @@
 
 #include <iostream>
 
-#include "dll/conv_rbm.hpp"
+#include "dll/conv_rbm_mp.hpp"
 #include "dll/ocv_visualizer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
 
 int main(int /*argc*/, char* /*argv*/[]){
-    dll::conv_rbm_desc<
-            28, 12, 6*6,
+    dll::conv_rbm_mp_desc<
+            28, 12, 6*6, 2,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L1>,
             //dll::sparsity,
             //dll::trainer<dll::pcd1_trainer_t>,
             dll::batch_size<25>,
-            dll::visible<dll::unit_type::GAUSSIAN>,
+            //dll::visible<dll::unit_type::GAUSSIAN>,
             dll::watcher<dll::opencv_rbm_visualizer>>::rbm_t rbm;
 
     //rbm.momentum = 0.9;
@@ -39,7 +39,7 @@ int main(int /*argc*/, char* /*argv*/[]){
     dataset.training_images.resize(500);
     dataset.training_labels.resize(500);
 
-    mnist::normalize_dataset(dataset);
+    mnist::binarize_dataset(dataset);
 
     rbm.train(dataset.training_images, 500, dll::init_watcher, 6, true);
 
