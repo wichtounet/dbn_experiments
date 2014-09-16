@@ -10,7 +10,8 @@
 #include <memory>
 
 #include "dll/dbn.hpp"
-#include "dll/layer.hpp"
+#include "dll/dbn_desc.hpp"
+#include "dll/dbn_layers.hpp"
 #include "dll/test.hpp"
 
 #include "mnist/mnist_reader.hpp"
@@ -137,7 +138,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, vector, double>();
+    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>();
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         std::cout << "Impossible to read dataset" << std::endl;
@@ -148,10 +149,12 @@ int main(int argc, char* argv[]){
     normalize(dataset.test_images);
 
     if(simple){
-        typedef dll::dbn<
-            dll::layer<28 * 28, 100, dll::in_dbn, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>,
-            dll::layer<100, 100, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>,
-            dll::layer<110, 200, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>> dbn_simple_t;
+        typedef dll::dbn_desc<
+            dll::dbn_layers<
+                dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+                dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+                dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t
+            >>::dbn_t dbn_simple_t;
 
         auto dbn = std::make_shared<dbn_simple_t>();
 
@@ -159,10 +162,12 @@ int main(int argc, char* argv[]){
 
         test_all(dbn, dataset, dll::label_predictor());
     } else {
-        typedef dll::dbn<
-            dll::layer<28 * 28, 300, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::init_weights, dll::visible<dll::unit_type::GAUSSIAN>>,
-            dll::layer<300, 500, dll::in_dbn, dll::momentum, dll::batch_size<100>>,
-            dll::layer<500, 10, dll::in_dbn, dll::momentum, dll::batch_size<100>, dll::hidden<dll::unit_type::SOFTMAX>>> dbn_t;
+        typedef dll::dbn_desc<
+            dll::dbn_layers<
+                dll::rbm_desc<28 * 28, 300, dll::momentum, dll::batch_size<100>, dll::init_weights, dll::visible<dll::unit_type::GAUSSIAN>>::rbm_t,
+                dll::rbm_desc<300, 500, dll::momentum, dll::batch_size<100>>::rbm_t,
+                dll::rbm_desc<500, 10, dll::momentum, dll::batch_size<100>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
+        >>::dbn_t dbn_t;
 
         auto dbn = std::make_unique<dbn_t>();
 

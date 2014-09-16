@@ -50,7 +50,7 @@ template<typename Container>
 void normalize(Container& values){
     for(auto& vec : values){
         //zero-mean
-        auto m = mean(vec);
+        auto m = ::mean(vec);
         for(auto& v : vec){
             v -= m;
         }
