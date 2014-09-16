@@ -9,10 +9,7 @@
 
 #include "etl/print.hpp"
 
-#include "dll/conv_rbm_mp.hpp"
-#include "dll/conv_mp_layer.hpp"
-
-#include "dll/vector.hpp"
+#include "dll/conv_rbm.hpp"
 
 #include "mnist/mnist_reader.hpp"
 
@@ -40,13 +37,13 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dll::conv_mp_layer<
-        28, 12, 40, 2,
+    dll::conv_rbm_desc<
+        28, 12, 40,
         dll::batch_size<25>,
         dll::visible<dll::unit_type::BINARY>
         >::rbm_t rbm;
 
-    auto dataset = mnist::read_dataset<std::vector, vector, double>();
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>();
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         std::cout << "Impossible to read dataset" << std::endl;
