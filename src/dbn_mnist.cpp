@@ -9,6 +9,8 @@
 #include <memory>
 
 #include "dll/dbn.hpp"
+#include "dll/dbn_desc.hpp"
+#include "dll/dbn_layers.hpp"
 #include "dll/test.hpp"
 
 #include "mnist/mnist_reader.hpp"
@@ -17,8 +19,8 @@
 namespace {
 
 template<typename DBN, typename P>
-void test_all(DBN& dbn, std::vector<vector<double>>& training_images, const std::vector<uint8_t>& training_labels, P&& predictor){
-    auto test_images = mnist::read_test_images<std::vector, vector, double>();
+void test_all(DBN& dbn, std::vector<etl::dyn_vector<double>>& training_images, const std::vector<uint8_t>& training_labels, P&& predictor){
+    auto test_images = mnist::read_test_images<std::vector, etl::dyn_vector, double>();
     auto test_labels = mnist::read_test_labels<std::vector>();
 
     if(test_images.empty() || test_labels.empty()){
@@ -55,7 +57,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, vector, double>();
+    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>();
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -66,10 +68,10 @@ int main(int argc, char* argv[]){
     if(simple){
         typedef dll::dbn_desc<
             dll::dbn_layers<
-                dll::rbm_desc<28 * 28, 100, dll::in_dbn, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-                dll::rbm_desc<100, 100, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-                dll::rbm_desc<110, 200, dll::in_dbn, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-            >> dbn_simple_t;
+                dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+                dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+                dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t
+            >>::dbn_t dbn_simple_t;
 
         auto dbn = std::make_shared<dbn_simple_t>();
 
@@ -77,10 +79,12 @@ int main(int argc, char* argv[]){
 
         test_all(dbn, dataset.training_images, dataset.training_labels, dll::label_predictor());
     } else {
-        typedef dll::dbn<
-            dll::layer<28 * 28, 100, dll::in_dbn, dll::momentum, dll::batch_size<50>, dll::init_weights>,
-            dll::layer<100, 200, dll::in_dbn, dll::momentum, dll::batch_size<50>>,
-            dll::layer<200, 10, dll::in_dbn, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::EXP>>> dbn_t;
+        typedef dll::dbn_desc<
+            dll::dbn_layers<
+            dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
+            dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
+            dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::EXP>>::rbm_t
+        >>::dbn_t dbn_t;
 
         auto dbn = make_unique<dbn_t>();
 
