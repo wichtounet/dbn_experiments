@@ -19,10 +19,10 @@ int main(int /*argc*/, char* /*argv*/[]){
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L1>,
             //dll::sparsity,
-            dll::trainer<dll::pcd1_trainer_t>,
+            //dll::trainer<dll::pcd1_trainer_t>,
             //dll::init_weights,
             dll::batch_size<50>,
-            dll::visible<dll::unit_type::GAUSSIAN>,
+            //dll::visible<dll::unit_type::GAUSSIAN>,
             dll::watcher<dll::opencv_rbm_visualizer>>::rbm_t rbm;
 
     //rbm.momentum = 0.9;
@@ -40,9 +40,9 @@ int main(int /*argc*/, char* /*argv*/[]){
     dataset.training_images.resize(500);
     dataset.training_labels.resize(500);
 
-    mnist::normalize_dataset(dataset);
+    mnist::binarize_dataset(dataset);
 
-    rbm.train(dataset.training_images, 500);
+    rbm.train(dataset.training_images, 500, dll::init_watcher, 10, false);
 
     return 0;
 }

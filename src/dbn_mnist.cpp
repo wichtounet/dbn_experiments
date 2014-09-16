@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>();
+    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>(5000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
             dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
             dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
             dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::EXP>>::rbm_t
-        >>::dbn_t dbn_t;
+        >, dll::watcher<dll::silent_dbn_watcher>>::dbn_t dbn_t;
 
         auto dbn = make_unique<dbn_t>();
 
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]){
             dbn->load(is);
         } else {
             std::cout << "Start pretraining" << std::endl;
-            dbn->pretrain(dataset.training_images, 5);
+            dbn->pretrain(dataset.training_images, 10);
 
             std::cout << "Start fine-tuning" << std::endl;
             dbn->fine_tune(dataset.training_images, dataset.training_labels, 5, 1000);
