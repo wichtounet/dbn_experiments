@@ -29,13 +29,13 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dll::layer<
+    dll::rbm_desc<
             28 * 28, 200,
             dll::momentum,
             dll::batch_size<25>,
             dll::hidden<dll::unit_type::RELU>>::rbm_t rbm;
 
-    auto training_images = mnist::read_training_images<std::vector, vector, double>();
+    auto training_images = mnist::read_training_images<std::vector, std::vector, double>();
     training_images.resize(1000);
 
     binarize_each(training_images);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
     }
 
     if(reconstruction){
-        auto test_images = mnist::read_test_images<std::vector, vector, double>();
+        auto test_images = mnist::read_test_images<std::vector, std::vector, double>();
         binarize_each(test_images);
 
         for(size_t t = 0; t < 10; ++t){
