@@ -28,9 +28,9 @@ int main(int /*argc*/, char* /*argv*/[]){
 
     typedef dll::dbn_desc<
         dll::dbn_layers<
-        dll::rbm_desc<28 * 28, 119, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
-        dll::rbm_desc<119, 20 * 20, dll::momentum, dll::batch_size<50>>::rbm_t,
-        dll::rbm_desc<20 * 20, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
+        dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
+        dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
+        dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
     >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
 
     auto dbn = make_unique<dbn_t>();
