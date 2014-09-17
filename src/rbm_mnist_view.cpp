@@ -15,7 +15,7 @@
 
 int main(int /*argc*/, char* /*argv*/[]){
     dll::rbm_desc<
-            28 * 28, 10*10,
+            28 * 28, 133,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L1>,
             //dll::sparsity,
@@ -42,7 +42,7 @@ int main(int /*argc*/, char* /*argv*/[]){
 
     mnist::binarize_dataset(dataset);
 
-    rbm.train(dataset.training_images, 500, dll::init_watcher, 10, false);
+    rbm.train(dataset.training_images, 500);
 
     return 0;
 }
