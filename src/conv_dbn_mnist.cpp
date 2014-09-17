@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>();
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(5000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
