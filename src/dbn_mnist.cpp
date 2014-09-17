@@ -9,8 +9,6 @@
 #include <memory>
 
 #include "dll/dbn.hpp"
-#include "dll/dbn_desc.hpp"
-#include "dll/dbn_layers.hpp"
 #include "dll/test.hpp"
 
 #include "mnist/mnist_reader.hpp"
