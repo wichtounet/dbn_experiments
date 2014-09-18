@@ -12,6 +12,7 @@
 #include "dll/conv_rbm.hpp"
 
 #include "mnist/mnist_reader.hpp"
+#include "mnist/mnist_utils.hpp"
 
 #include "utils.hpp"
 
@@ -38,29 +39,25 @@ int main(int argc, char* argv[]){
     }
 
     dll::conv_rbm_desc<
-        28, 12, 40,
+        28, 16, 40,
         dll::batch_size<25>,
         dll::visible<dll::unit_type::BINARY>
         >::rbm_t rbm;
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>();
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         std::cout << "Impossible to read dataset" << std::endl;
         return 1;
     }
 
-    dataset.training_images.resize(100);
-
-    binarize_each(dataset.training_images);
-    binarize_each(dataset.test_images);
+    mnist::binarize_dataset(dataset);
 
     if(load){
         std::ifstream is("crbm-1.dat", std::ofstream::binary);
         rbm.load(is);
     } else if(train) {
-        rbm.learning_rate = 0.001;
-        rbm.train(dataset.training_images, 100);
+        rbm.train(dataset.training_images, 10);
 
         std::ofstream os("crbm-1.dat", std::ofstream::binary);
         rbm.store(os);
