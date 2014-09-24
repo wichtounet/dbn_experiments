@@ -62,7 +62,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>(500);
+    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>(100);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -86,20 +86,19 @@ int main(int argc, char* argv[]){
     } else if(svm){
         typedef dll::dbn_desc<
             dll::dbn_layers<
-                dll::rbm_desc<28 * 28, 300, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t
+                dll::rbm_desc<28 * 28, 400, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
+                dll::rbm_desc<400, 600, dll::momentum, dll::batch_size<50>>::rbm_t
         >>::dbn_t dbn_t;
 
         auto dbn = make_unique<dbn_t>();
 
         dbn->display();
 
-        dbn->pretrain(dataset.training_images, 10);
+        dbn->pretrain(dataset.training_images, 20);
 
-        //TODO It seems that mnist reader does not limit the sizes correctly
-        dataset.training_labels.resize(dataset.training_images.size());
-
-        std::cout << "Start SVM training" << std::endl;
-        dbn->svm_train(dataset.training_images, dataset.training_labels);
+        if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
+            std::cout << "SVM training failed" << std::endl;
+        }
 
         test_all(dbn, dataset.training_images, dataset.training_labels, dll::svm_predictor());
     } else {
