@@ -94,10 +94,18 @@ int main(int argc, char* argv[]){
 
         dbn->display();
 
-        dbn->pretrain(dataset.training_images, 20);
+        if(load){
+            std::ifstream is("dbn.dat", std::ifstream::binary);
+            dbn->load(is);
+        } else {
+            dbn->pretrain(dataset.training_images, 20);
 
-        if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
-            std::cout << "SVM training failed" << std::endl;
+            if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
+                std::cout << "SVM training failed" << std::endl;
+            }
+
+            std::ofstream os("dbn.dat", std::ofstream::binary);
+            dbn->store(os);
         }
 
         test_all(dbn, dataset.training_images, dataset.training_labels, dll::svm_predictor());
