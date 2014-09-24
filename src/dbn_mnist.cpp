@@ -8,6 +8,8 @@
 #include <iostream>
 #include <memory>
 
+#define DLL_SVM_SUPPORT
+
 #include "dll/dbn.hpp"
 #include "dll/test.hpp"
 
@@ -42,6 +44,7 @@ void test_all(DBN& dbn, std::vector<etl::dyn_vector<double>>& training_images, c
 int main(int argc, char* argv[]){
     auto simple = false;
     auto load = false;
+    auto svm = false;
 
     for(int i = 1; i < argc; ++i){
         std::string command(argv[i]);
@@ -53,9 +56,13 @@ int main(int argc, char* argv[]){
         if(command == "load"){
             load = true;
         }
+
+        if(command == "svm"){
+            svm = true;
+        }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>(5000);
+    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>(500);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -76,12 +83,26 @@ int main(int argc, char* argv[]){
         dbn->train_with_labels(dataset.training_images, dataset.training_labels, 10, 5);
 
         test_all(dbn, dataset.training_images, dataset.training_labels, dll::label_predictor());
+    } else if(svm){
+        typedef dll::dbn_desc<
+            dll::dbn_layers<
+                dll::rbm_desc<28 * 28, 300, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t
+        >>::dbn_t dbn_t;
+
+        auto dbn = make_unique<dbn_t>();
+
+        dbn->display();
+
+        dbn->pretrain(dataset.training_images, 10);
+
+        std::cout << "Start SVM training" << std::endl;
+        dbn->svm_train(dataset.training_images, dataset.training_labels);
     } else {
         typedef dll::dbn_desc<
             dll::dbn_layers<
-            dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
-            dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
-            dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
+                dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
+                dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
+                dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
         >, dll::watcher<dll::default_dbn_watcher>>::dbn_t dbn_t;
 
         auto dbn = make_unique<dbn_t>();
