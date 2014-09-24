@@ -95,8 +95,13 @@ int main(int argc, char* argv[]){
 
         dbn->pretrain(dataset.training_images, 10);
 
+        //TODO It seems that mnist reader does not limit the sizes correctly
+        dataset.training_labels.resize(dataset.training_images.size());
+
         std::cout << "Start SVM training" << std::endl;
         dbn->svm_train(dataset.training_images, dataset.training_labels);
+
+        test_all(dbn, dataset.training_images, dataset.training_labels, dll::svm_predictor());
     } else {
         typedef dll::dbn_desc<
             dll::dbn_layers<
