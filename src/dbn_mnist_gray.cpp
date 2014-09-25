@@ -18,6 +18,8 @@
 
 #include "utils.hpp"
 
+//TODO Merge this with dbn_mnist
+
 namespace {
 
 template<typename DBN, typename Dataset, typename P>
