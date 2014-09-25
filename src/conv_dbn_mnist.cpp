@@ -31,6 +31,7 @@ void test_all(DBN& dbn, Dataset& dataset, P&& predictor){
 int main(int argc, char* argv[]){
     auto load = false;
     auto svm = false;
+    auto grid = false;
 
     for(int i = 1; i < argc; ++i){
         std::string command(argv[i]);
@@ -41,6 +42,10 @@ int main(int argc, char* argv[]){
 
         if(command == "svm"){
             svm = true;
+        }
+
+        if(command == "grid"){
+            grid = true;
         }
     }
 
@@ -72,8 +77,12 @@ int main(int argc, char* argv[]){
             std::cout << "Start pretraining" << std::endl;
             dbn->pretrain(dataset.training_images, 10);
 
-            if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
-                std::cout << "SVM training failed" << std::endl;
+            if(grid){
+                dbn->svm_grid_search(dataset.training_images, dataset.training_labels);
+            } else {
+                if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
+                    std::cout << "SVM training failed" << std::endl;
+                }
             }
 
             std::ofstream os("dbn.dat", std::ofstream::binary);
