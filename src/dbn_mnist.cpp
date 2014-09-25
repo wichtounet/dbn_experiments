@@ -18,24 +18,16 @@
 
 namespace {
 
-template<typename DBN, typename P>
-void test_all(DBN& dbn, std::vector<etl::dyn_vector<double>>& training_images, const std::vector<uint8_t>& training_labels, P&& predictor){
-    auto test_images = mnist::read_test_images<std::vector, etl::dyn_vector, double>();
-    auto test_labels = mnist::read_test_labels<std::vector>();
-
-    if(test_images.empty() || test_labels.empty()){
-        std::cout << "Impossible to read test set" << std::endl;
-        return;
-    }
-
+template<typename DBN, typename Dataset, typename P>
+void test_all(DBN& dbn, Dataset& dataset, P&& predictor){
     std::cout << "Start testing" << std::endl;
 
     std::cout << "Training Set" << std::endl;
-    auto error_rate = dll::test_set(dbn, training_images, training_labels, predictor);
+    auto error_rate = dll::test_set(dbn, dataset.training_images, dataset.training_labels, predictor);
     std::cout << "\tError rate (normal): " << 100.0 * error_rate << std::endl;
 
     std::cout << "Test Set" << std::endl;
-    error_rate =  dll::test_set(dbn, test_images, test_labels, predictor);
+    error_rate =  dll::test_set(dbn, dataset.test_images, dataset.test_labels, predictor);
     std::cout << "\tError rate (normal): " << 100.0 * error_rate << std::endl;
 }
 
@@ -82,7 +74,7 @@ int main(int argc, char* argv[]){
 
         dbn->train_with_labels(dataset.training_images, dataset.training_labels, 10, 5);
 
-        test_all(dbn, dataset.training_images, dataset.training_labels, dll::label_predictor());
+        test_all(dbn, dataset, dll::label_predictor());
     } else if(svm){
         typedef dll::dbn_desc<
             dll::dbn_layers<
@@ -108,7 +100,7 @@ int main(int argc, char* argv[]){
             dbn->store(os);
         }
 
-        test_all(dbn, dataset.training_images, dataset.training_labels, dll::svm_predictor());
+        test_all(dbn, dataset, dll::svm_predictor());
     } else {
         typedef dll::dbn_desc<
             dll::dbn_layers<
@@ -137,7 +129,7 @@ int main(int argc, char* argv[]){
             dbn->store(os);
         }
 
-        test_all(dbn, dataset.training_images, dataset.training_labels, dll::predictor());
+        test_all(dbn, dataset, dll::predictor());
     }
 
     return 0;
