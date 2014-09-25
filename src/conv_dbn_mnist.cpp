@@ -44,7 +44,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(200);
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
             dbn->load(is);
         } else {
             std::cout << "Start pretraining" << std::endl;
-            dbn->pretrain(dataset.training_images, 5);
+            dbn->pretrain(dataset.training_images, 10);
 
             if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
                 std::cout << "SVM training failed" << std::endl;
