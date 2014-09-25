@@ -35,7 +35,7 @@ void test_all(DBN& dbn, Dataset& dataset, P&& predictor){
 
 template<typename DBN, typename Image>
 void display(const DBN& dbn, const Image& image){
-    auto weights = dbn->predict_weights(image);
+    auto weights = dbn->activation_probabilities(image);
 
     for(std::size_t i = 0; i < 28; ++i){
         for(std::size_t j = 0; j < 28; ++j){
@@ -66,7 +66,7 @@ void errors(const DBN& dbn, Images& images, Labels& labels){
         auto predicted = dbn->predict(images[i]);
 
         if(predicted != labels[i]){
-            auto weights = dbn->predict_weights(images[i]);
+            auto weights = dbn->activation_probabilities(images[i]);
             auto max = 0.0;
             auto second = 0;
 
