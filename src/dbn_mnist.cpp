@@ -109,7 +109,9 @@ int main(int argc, char* argv[]){
             dbn->store(os);
         }
 
-        test_all(dbn, dataset, dll::svm_predictor());
+        if(!grid){
+            test_all(dbn, dataset, dll::svm_predictor());
+        }
     } else {
         typedef dll::dbn_desc<
             dll::dbn_layers<
