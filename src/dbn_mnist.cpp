@@ -155,8 +155,7 @@ int main(int argc, char* argv[]){
 
     //Gray input
     if(gray){
-        normalize(dataset.training_images);
-        normalize(dataset.test_images);
+        mnist::normalize_dataset(dataset);
 
         if(simple){
             typedef dll::dbn_desc<
