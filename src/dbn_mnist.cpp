@@ -13,6 +13,7 @@
 
 #include "dll/dbn.hpp"
 #include "dll/test.hpp"
+#include "dll/ocv_visualizer.hpp"
 
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
@@ -124,32 +125,25 @@ int main(int argc, char* argv[]){
     auto grid = false;
     auto gray = false;
     auto prob = false;
+    auto view = false;
 
     for(int i = 1; i < argc; ++i){
         std::string command(argv[i]);
 
         if(command == "simple"){
             simple = true;
-        }
-
-        if(command == "load"){
+        } else if(command == "load"){
             load = true;
-        }
-
-        if(command == "svm"){
+        } else if(command == "svm"){
             svm = true;
-        }
-
-        if(command == "grid"){
+        } else if(command == "grid"){
             grid = true;
-        }
-
-        if(command == "gray"){
+        } else if(command == "gray"){
             gray = true;
-        }
-
-        if(command == "prob"){
+        } else if(command == "prob"){
             prob = true;
+        } else if(command == "view"){
+            view = true;
         }
     }
 
@@ -221,6 +215,28 @@ int main(int argc, char* argv[]){
                 test_all(dbn, dataset, dll::predictor());
             }
         }
+    } else if(view){
+        mnist::binarize_dataset(dataset);
+
+        typedef dll::dbn_desc<
+            dll::dbn_layers<
+            dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
+            dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
+            dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
+                >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
+
+        auto dbn = make_unique<dbn_t>();
+
+        dbn->display();
+
+        std::cout << "Start pretraining" << std::endl;
+        dbn->pretrain(dataset.training_images, 10);
+
+        std::cout << "Start fine-tuning" << std::endl;
+        dbn->fine_tune(dataset.training_images, dataset.training_labels, 5, 1000);
+
+        std::ofstream os("dbn.dat", std::ofstream::binary);
+        dbn->store(os);
     } else {
         mnist::binarize_dataset(dataset);
 
