@@ -10,8 +10,7 @@
 #include "dll/rbm.hpp"
 
 #include "mnist/mnist_reader.hpp"
-
-#include "utils.hpp"
+#include "mnist/mnist_utils.hpp"
 
 int main(int argc, char* argv[]){
     auto reconstruction = false;
@@ -35,27 +34,23 @@ int main(int argc, char* argv[]){
             dll::batch_size<25>,
             dll::hidden<dll::unit_type::RELU>>::rbm_t rbm;
 
-    auto training_images = mnist::read_training_images<std::vector, std::vector, double>();
-    training_images.resize(1000);
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
-    binarize_each(training_images);
+    mnist::binarize_dataset(dataset);
 
     if(load){
         std::ifstream is("rbm-1.dat", std::ofstream::binary);
         rbm.load(is);
     } else {
-        rbm.train(training_images, 100);
+        rbm.train(dataset.training_images, 100);
 
         std::ofstream os("rbm-1.dat", std::ofstream::binary);
         rbm.store(os);
     }
 
     if(reconstruction){
-        auto test_images = mnist::read_test_images<std::vector, std::vector, double>();
-        binarize_each(test_images);
-
         for(size_t t = 0; t < 10; ++t){
-            auto& image = training_images[6 + t];
+            auto& image = dataset.training_images[6 + t];
 
             std::cout << "Source image" << std::endl;
             for(size_t i = 0; i < 28; ++i){

@@ -14,8 +14,6 @@
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
 
-#include "utils.hpp"
-
 int main(int argc, char* argv[]){
     auto reconstruction = false;
     auto load = false;

@@ -18,8 +18,6 @@
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
 
-#include "utils.hpp"
-
 namespace {
 
 template<typename DBN, typename Dataset, typename P>
