@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(5000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -75,19 +75,23 @@ int main(int argc, char* argv[]){
             dbn->load(is);
         } else {
             std::cout << "Start pretraining" << std::endl;
-            dbn->pretrain(dataset.training_images, 10);
+            dbn->pretrain(dataset.training_images, 20);
 
             if(grid){
                 svm::rbf_grid grid;
-                grid.type = svm::grid_search_type::EXP;
-                grid.c_first = 2e-4;
-                grid.c_first = 2e4;
-                grid.gamma_first = 2e-9;
-                grid.gamma_last = 2e5;
+                grid.type = svm::grid_search_type::LINEAR;
+                grid.c_first = 1.5;
+                grid.c_last = 10;
+                grid.gamma_first = 0;
+                grid.gamma_last = 200;
 
                 dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 5, grid);
             } else {
-                if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
+                auto parameters = dll::default_svm_parameters();
+                parameters.C = 6.22222;
+                parameters.gamma = 88;
+
+                if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
                     std::cout << "SVM training failed" << std::endl;
                 }
             }
