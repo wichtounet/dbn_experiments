@@ -78,7 +78,14 @@ int main(int argc, char* argv[]){
             dbn->pretrain(dataset.training_images, 10);
 
             if(grid){
-                dbn->svm_grid_search(dataset.training_images, dataset.training_labels);
+                svm::rbf_grid grid;
+                grid.type = svm::grid_search_type::EXP;
+                grid.c_first = 2e-4;
+                grid.c_first = 2e4;
+                grid.gamma_first = 2e-9;
+                grid.gamma_last = 2e5;
+
+                dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 5, grid);
             } else {
                 if(!dbn->svm_train(dataset.training_images, dataset.training_labels)){
                     std::cout << "SVM training failed" << std::endl;
