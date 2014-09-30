@@ -60,11 +60,17 @@ int main(int argc, char* argv[]){
     if(svm){
         typedef dll::conv_dbn_desc<
             dll::dbn_layers<
-            dll::conv_rbm_desc<28, 12, 40, dll::momentum, dll::batch_size<50>>::rbm_t,
-            dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>>::rbm_t
+            dll::conv_rbm_desc<28, 12, 40, dll::momentum, dll::batch_size<50>, dll::sparsity>::rbm_t,
+            dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>, dll::sparsity>::rbm_t
                 >>::dbn_t dbn_t;
 
         auto dbn = make_unique<dbn_t>();
+
+        dbn->layer<0>().sparsity_target = 0.1;
+        dbn->layer<0>().sparsity_cost = 0.9;
+
+        dbn->layer<1>().sparsity_target = 0.1;
+        dbn->layer<1>().sparsity_cost = 0.9;
 
         dbn->display();
 
@@ -88,8 +94,8 @@ int main(int argc, char* argv[]){
                 dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 5, grid);
             } else {
                 auto parameters = dll::default_svm_parameters();
-                parameters.C = 6.22222;
-                parameters.gamma = 88;
+                //parameters.C = 6.22222;
+                //parameters.gamma = 88;
 
                 if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
                     std::cout << "SVM training failed" << std::endl;
