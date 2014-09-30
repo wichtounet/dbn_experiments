@@ -6,3 +6,7 @@
 	path = dll
 	url = https://github.com/wichtounet/dll.git
 	branch = master
+[submodule "make-utils"]
+	path = make-utils
+	url = https://github.com/wichtounet/make-utils.git
+	branch = master

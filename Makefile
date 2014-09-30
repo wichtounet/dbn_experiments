@@ -2,61 +2,22 @@ default: release
 
 .PHONY: default release debug all clean
 
-CPP_FILES=$(wildcard src/*.cpp)
+include make-utils/flags.mk
+include make-utils/cpp-utils.mk
 
-DEBUG_D_FILES=$(CPP_FILES:%.cpp=debug/%.cpp.d)
-RELEASE_D_FILES=$(CPP_FILES:%.cpp=release/%.cpp.d)
+CXX_FLAGS += -Idll/include -Idll/nice_svm/include -Idll/etl/include -Imnist/include -std=c++1y -stdlib=libc++ 
+LD_FLAGS  += -lsvm -lopencv_core -lopencv_imgproc -lopencv_highgui
 
-DEBUG_O_FILES=$(CPP_FILES:%.cpp=debug/%.cpp.o)
-RELEASE_O_FILES=$(CPP_FILES:%.cpp=release/%.cpp.o)
+$(eval $(call auto_folder_compile,src))
 
-NONEXEC_CPP_FILES := $(filter-out src/rbm_mnist.cpp,$(NONEXEC_CPP_FILES))
-NONEXEC_CPP_FILES := $(filter-out src/rbm_mnist_view.cpp,$(NONEXEC_CPP_FILES))
-NONEXEC_CPP_FILES := $(filter-out src/crbm_mnist_view.cpp,$(NONEXEC_CPP_FILES))
-NONEXEC_CPP_FILES := $(filter-out src/dbn_mnist.cpp,$(NONEXEC_CPP_FILES))
-NONEXEC_CPP_FILES := $(filter-out src/dbn_mnist_view.cpp,$(NONEXEC_CPP_FILES))
-NONEXEC_CPP_FILES := $(filter-out src/conv_dbn_mnist.cpp,$(NONEXEC_CPP_FILES))
-NONEXEC_CPP_FILES := $(filter-out src/conv_dbn_mnist_view.cpp,$(NONEXEC_CPP_FILES))
-NONEXEC_CPP_FILES := $(filter-out src/crbm_mnist.cpp,$(NONEXEC_CPP_FILES))
-
-NON_EXEC_DEBUG_O_FILES=$(NONEXEC_CPP_FILES:%.cpp=debug/%.cpp.o)
-NON_EXEC_RELEASE_O_FILES=$(NONEXEC_CPP_FILES:%.cpp=release/%.cpp.o)
-
-CXX=clang++
-LD=clang++
-
-#TODO Use make-utils
-
-WARNING_FLAGS=-Wextra -Wall -Qunused-arguments -Wuninitialized -Wsometimes-uninitialized -Wno-long-long -Winit-self -Wdocumentation
-CXX_FLAGS=-Idll/include -Idll/nice_svm/include -Idll/etl/include -Imnist/include -Iinclude -std=c++1y -stdlib=libc++ $(WARNING_FLAGS)
-LD_FLAGS=$(CXX_FLAGS) -lsvm -lopencv_core -lopencv_imgproc -lopencv_highgui
-
-DEBUG_FLAGS=-g
-RELEASE_FLAGS=-g -DNDEBUG -Ofast -march=native -fvectorize -fslp-vectorize-aggressive -fomit-frame-pointer
-
-debug/src/%.cpp.o: src/%.cpp
-	@ mkdir -p debug/src/
-	$(CXX) $(CXX_FLAGS) $(DEBUG_FLAGS) -o $@ -c $<
-
-release/src/%.cpp.o: src/%.cpp
-	@ mkdir -p release/src/
-	$(CXX) $(CXX_FLAGS) $(RELEASE_FLAGS) -o $@ -c $<
-
-debug/bin/%: debug/src/%.cpp.o $(NON_EXEC_DEBUG_O_FILES)
-	@ mkdir -p debug/bin/
-	$(LD) $(LD_FLAGS) $(DEBUG_FLAGS) -o $@ $+
-
-release/bin/%: release/src/%.cpp.o $(NON_EXEC_RELEASE_O_FILES)
-	@ mkdir -p release/bin/
-	$(LD) $(LD_FLAGS) $(RELEASE_FLAGS) -o $@ $+
-
-debug/src/%.cpp.d: $(CPP_FILES)
-	@ mkdir -p debug/src/
-	@ $(CXX) $(CXX_FLAGS) $(DEBUG_FLAGS) -MM -MT debug/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
-
-release/src/%.cpp.d: $(CPP_FILES)
-	@ mkdir -p release/src/
-	@ $(CXX) $(CXX_FLAGS) $(RELEASE_FLAGS) -MM -MT release/src/$*.cpp.o src/$*.cpp | sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' > $@
+$(eval $(call add_src_executable,rbm_mnist,rbm_mnist.cpp))
+$(eval $(call add_src_executable,rbm_mnist_view,rbm_mnist_view.cpp))
+$(eval $(call add_src_executable,crbm_mnist,crbm_mnist.cpp))
+$(eval $(call add_src_executable,crbm_mnist_view,crbm_mnist_view.cpp))
+$(eval $(call add_src_executable,dbn_mnist,dbn_mnist.cpp))
+$(eval $(call add_src_executable,dbn_mnist_view,dbn_mnist_view.cpp))
+$(eval $(call add_src_executable,conv_dbn_mnist,conv_dbn_mnist.cpp))
+$(eval $(call add_src_executable,conv_dbn_mnist_view,conv_dbn_mnist_view.cpp))
 
 release: release/bin/rbm_mnist release/bin/rbm_mnist_view release/bin/crbm_mnist_view release/bin/dbn_mnist release/bin/crbm_mnist release/bin/conv_dbn_mnist release/bin/conv_dbn_mnist_view
 debug: debug/bin/rbm_mnist debug/bin/rbm_mnist_view debug/bin/crbm_mnist_view debug/bin/dbn_mnist debug/bin/crbm_mnist debug/bin/conv_dbn_mnist debug/bin/dbn_mnist_view
@@ -67,9 +28,6 @@ sonar: release
 	cppcheck --xml-version=2 --enable=all --std=c++11 src 2> cppcheck_report.xml
 	/opt/sonar-runner/bin/sonar-runner
 
-clean:
-	rm -rf release/
-	rm -rf debug/
+clean: base_clean
 
--include $(DEBUG_D_FILES)
--include $(RELEASE_D_FILES)
+include make-utils/cpp-utils-finalize.mk
