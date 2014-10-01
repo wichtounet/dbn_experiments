@@ -13,21 +13,24 @@
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
 
+template<typename RBM>
+using visu = dll::opencv_rbm_visualizer<RBM, dll::rbm_ocv_config<20, false>>;
+
 int main(int /*argc*/, char* /*argv*/[]){
     dll::conv_rbm_desc<
-            28, 12, 6*6,
+            28, 12, 40,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L1>,
-            dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
+            //dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
             //dll::trainer<dll::pcd1_trainer_t>,
-            dll::batch_size<25>,
-            //dll::visible<dll::unit_type::GAUSSIAN>,
-            dll::watcher<dll::opencv_rbm_visualizer>>::rbm_t rbm;
+            dll::batch_size<50>,
+            dll::visible<dll::unit_type::GAUSSIAN>,
+            dll::watcher<visu>>::rbm_t rbm;
 
     //rbm.momentum = 0.9;
     rbm.sparsity_target = 0.1;
     rbm.sparsity_cost = 0.9;
-    rbm.learning_rate *= 10.0;
+    //rbm.learning_rate *= 10.0;
 
     auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
@@ -36,7 +39,7 @@ int main(int /*argc*/, char* /*argv*/[]){
         return 1;
     }
 
-    mnist::binarize_dataset(dataset);
+    mnist::normalize_dataset(dataset);
 
     rbm.train(dataset.training_images, 500);
 
