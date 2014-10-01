@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
             dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>>::rbm_t
         >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
 
-    auto dbn = make_unique<dbn_t>();
+    auto dbn = std::make_unique<dbn_t>();
 
     dbn->display();
 

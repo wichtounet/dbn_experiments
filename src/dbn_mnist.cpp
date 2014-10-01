@@ -222,7 +222,7 @@ int main(int argc, char* argv[]){
             dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
                 >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
 
-        auto dbn = make_unique<dbn_t>();
+        auto dbn = std::make_unique<dbn_t>();
 
         dbn->display();
 
@@ -256,7 +256,7 @@ int main(int argc, char* argv[]){
                 dll::rbm_desc<400, 600, dll::momentum, dll::batch_size<50>>::rbm_t
                     >>::dbn_t dbn_t;
 
-            auto dbn = make_unique<dbn_t>();
+            auto dbn = std::make_unique<dbn_t>();
 
             dbn->display();
 
@@ -289,7 +289,7 @@ int main(int argc, char* argv[]){
                 dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
                     >, dll::watcher<dll::default_dbn_watcher>>::dbn_t dbn_t;
 
-            auto dbn = make_unique<dbn_t>();
+            auto dbn = std::make_unique<dbn_t>();
 
             dbn->display();
 

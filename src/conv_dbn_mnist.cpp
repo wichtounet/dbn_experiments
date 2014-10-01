@@ -60,11 +60,11 @@ int main(int argc, char* argv[]){
     if(svm){
         typedef dll::conv_dbn_desc<
             dll::dbn_layers<
-            dll::conv_rbm_desc<28, 12, 40, dll::momentum, dll::batch_size<50>, dll::sparsity>::rbm_t,
-            dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>, dll::sparsity>::rbm_t
+            dll::conv_rbm_desc<28, 12, 40, dll::momentum, dll::batch_size<50>, dll::sparsity<>>::rbm_t,
+            dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>, dll::sparsity<>>::rbm_t
                 >>::dbn_t dbn_t;
 
-        auto dbn = make_unique<dbn_t>();
+        auto dbn = std::make_unique<dbn_t>();
 
         dbn->layer<0>().sparsity_target = 0.1;
         dbn->layer<0>().sparsity_cost = 0.9;
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]){
             dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>>::rbm_t
                 >>::dbn_t dbn_t;
 
-        auto dbn = make_unique<dbn_t>();
+        auto dbn = std::make_unique<dbn_t>();
 
         dbn->display();
 
