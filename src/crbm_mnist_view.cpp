@@ -21,16 +21,16 @@ int main(int /*argc*/, char* /*argv*/[]){
             28, 12, 40,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L1>,
-            //dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
+            dll::sparsity<dll::sparsity_method::GLOBAL_TARGET>,
             //dll::trainer<dll::pcd1_trainer_t>,
             dll::batch_size<50>,
             dll::visible<dll::unit_type::GAUSSIAN>,
             dll::watcher<visu>>::rbm_t rbm;
 
     //rbm.momentum = 0.9;
-    rbm.sparsity_target = 0.1;
+    rbm.sparsity_target = 0.08;
     rbm.sparsity_cost = 0.9;
-    //rbm.learning_rate *= 10.0;
+    rbm.learning_rate *= 10.0;
 
     auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
