@@ -18,15 +18,15 @@ int main(int /*argc*/, char* /*argv*/[]){
             28, 12, 40, 2,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L2>,
-            dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
+            //dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
             //dll::trainer<dll::pcd1_trainer_t>,
             dll::batch_size<25>,
-            dll::visible<dll::unit_type::GAUSSIAN>,
+            //dll::visible<dll::unit_type::GAUSSIAN>,
             dll::watcher<dll::opencv_rbm_visualizer>>::rbm_t rbm;
 
     //rbm.momentum = 0.9;
-    rbm.sparsity_target = 0.08;
-    rbm.sparsity_cost = 0.9;
+    //rbm.sparsity_target = 0.08;
+    //rbm.sparsity_cost = 0.9;
     //rbm.learning_rate = 0.05;
     //rbm.learning_rate /= 10.0;
 
@@ -37,8 +37,8 @@ int main(int /*argc*/, char* /*argv*/[]){
         return 1;
     }
 
-    mnist::normalize_dataset(dataset);
-    //mnist::binarize_dataset(dataset);
+    //mnist::normalize_dataset(dataset);
+    mnist::binarize_dataset(dataset);
 
     rbm.train(dataset.training_images, 500, dll::init_watcher);
 
