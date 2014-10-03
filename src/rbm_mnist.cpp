@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
         std::ifstream is("rbm-1.dat", std::ofstream::binary);
         rbm.load(is);
     } else {
-        rbm.train(dataset.training_images, 100);
+        rbm.train(dataset.training_images, 10);
 
         std::ofstream os("rbm-1.dat", std::ofstream::binary);
         rbm.store(os);
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
 
     if(reconstruction){
         for(size_t t = 0; t < 10; ++t){
-            auto& image = dataset.training_images[6 + t];
+            auto& image = dataset.test_images[6 + t];
 
             std::cout << "Source image" << std::endl;
             for(size_t i = 0; i < 28; ++i){
