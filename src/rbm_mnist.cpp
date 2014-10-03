@@ -16,6 +16,8 @@ int main(int argc, char* argv[]){
     auto reconstruction = false;
     auto load = false;
 
+    //TODO Add support for gray images
+
     for(int i = 1; i < argc; ++i){
         std::string command(argv[i]);
 
