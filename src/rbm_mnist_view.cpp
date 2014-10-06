@@ -18,7 +18,7 @@ int main(int /*argc*/, char* /*argv*/[]){
             28 * 28, 196,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L1>,
-            dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
+            dll::sparsity<dll::sparsity_method::GLOBAL_TARGET>,
             //dll::trainer<dll::pcd1_trainer_t>,
             //dll::init_weights,
             dll::batch_size<50>,
@@ -26,7 +26,7 @@ int main(int /*argc*/, char* /*argv*/[]){
             dll::watcher<dll::opencv_rbm_visualizer>>::rbm_t rbm;
 
     //rbm.momentum = 0.9;
-    rbm.sparsity_target = 0.05;
+    rbm.sparsity_target = 0.01;
     //rbm.sparsity_cost = 0.9;
     rbm.learning_rate /= 10.0;
 
