@@ -34,17 +34,19 @@ int main(int argc, char* argv[]){
             28 * 28, 200,
             dll::momentum,
             dll::batch_size<25>,
-            dll::hidden<dll::unit_type::RELU>>::rbm_t rbm;
+            //dll::hidden<dll::unit_type::RELU>,
+            dll::visible<dll::unit_type::GAUSSIAN>
+            >::rbm_t rbm;
 
     auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
-    mnist::binarize_dataset(dataset);
+    mnist::normalize_dataset(dataset);
 
     if(load){
         std::ifstream is("rbm-1.dat", std::ofstream::binary);
         rbm.load(is);
     } else {
-        rbm.train(dataset.training_images, 10);
+        rbm.train(dataset.training_images, 25);
 
         std::ofstream os("rbm-1.dat", std::ofstream::binary);
         rbm.store(os);
@@ -52,7 +54,7 @@ int main(int argc, char* argv[]){
 
     if(reconstruction){
         for(size_t t = 0; t < 10; ++t){
-            auto& image = dataset.test_images[6 + t];
+            auto& image = dataset.training_images[6 + t];
 
             std::cout << "Source image" << std::endl;
             for(size_t i = 0; i < 28; ++i){
@@ -65,6 +67,7 @@ int main(int argc, char* argv[]){
             rbm.reconstruct(image);
 
             std::cout << "Reconstructed image" << std::endl;
+            std::cout.precision(2);
             rbm.display_visible_units(28);
         }
     }
