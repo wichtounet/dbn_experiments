@@ -18,11 +18,13 @@ int main(int /*argc*/, char* /*argv*/[]){
             28, 12, 40, 2,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L2>,
-            //dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
+            dll::sparsity<dll::sparsity_method::LEE>,
             //dll::trainer<dll::pcd1_trainer_t>,
             dll::batch_size<25>,
             //dll::visible<dll::unit_type::GAUSSIAN>,
             dll::watcher<dll::opencv_rbm_visualizer>>::rbm_t rbm;
+
+    rbm.pbias_lambda = 100;
 
     //rbm.momentum = 0.9;
     //rbm.sparsity_target = 0.08;

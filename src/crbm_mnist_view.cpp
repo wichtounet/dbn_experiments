@@ -14,7 +14,7 @@
 #include "mnist/mnist_utils.hpp"
 
 template<typename RBM>
-using visu = dll::opencv_rbm_visualizer<RBM, dll::rbm_ocv_config<20, false>>;
+using visu = dll::opencv_rbm_visualizer<RBM, dll::rbm_ocv_config<20, true>>;
 
 int main(int /*argc*/, char* /*argv*/[]){
     dll::conv_rbm_desc<
@@ -27,7 +27,7 @@ int main(int /*argc*/, char* /*argv*/[]){
             //dll::visible<dll::unit_type::GAUSSIAN>,
             dll::watcher<visu>>::rbm_t rbm;
 
-    rbm.pbias_lambda = 1000;
+    rbm.pbias_lambda = 100;
 
     //rbm.momentum = 0.9;
     //rbm.sparsity_target = 0.08;
