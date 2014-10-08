@@ -15,11 +15,12 @@
 
 int main(int /*argc*/, char* /*argv*/[]){
     dll::rbm_desc<
-            28 * 28, 196,
+            28 * 28, 14*14,
+            //dll::init_weights,
             dll::momentum,
-            //dll::weight_decay<dll::decay_type::L1>,
-            dll::sparsity<dll::sparsity_method::GLOBAL_TARGET>,
-            //dll::trainer<dll::pcd1_trainer_t>,
+            dll::weight_decay<dll::decay_type::L2>,
+            dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
+            dll::trainer<dll::pcd1_trainer_t>,
             //dll::init_weights,
             dll::batch_size<50>,
             //dll::visible<dll::unit_type::GAUSSIAN>,
@@ -30,7 +31,7 @@ int main(int /*argc*/, char* /*argv*/[]){
     //rbm.sparsity_cost = 0.9;
     rbm.learning_rate /= 10.0;
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(5000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         std::cout << "Impossible to read dataset" << std::endl;
