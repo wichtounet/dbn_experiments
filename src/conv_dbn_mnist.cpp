@@ -72,6 +72,9 @@ int main(int argc, char* argv[]){
         dbn->layer<1>().pbias = 0.05;
         dbn->layer<1>().pbias_lambda = 100;
 
+        std::cout << dbn->rbm_output<0>() << std::endl;
+        std::cout << dbn->rbm_input<1>() << std::endl;
+
         dbn->display();
 
         if(load){
