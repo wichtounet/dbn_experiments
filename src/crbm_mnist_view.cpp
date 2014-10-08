@@ -20,17 +20,19 @@ int main(int /*argc*/, char* /*argv*/[]){
     dll::conv_rbm_desc<
             28, 12, 40,
             dll::momentum,
-            //dll::weight_decay<dll::decay_type::L1>,
-            dll::sparsity<dll::sparsity_method::GLOBAL_TARGET>,
+            //dll::weight_decay<dll::decay_type::L2>,
+            dll::sparsity<dll::sparsity_method::LEE>,
             //dll::trainer<dll::pcd1_trainer_t>,
             dll::batch_size<50>,
-            dll::visible<dll::unit_type::GAUSSIAN>,
+            //dll::visible<dll::unit_type::GAUSSIAN>,
             dll::watcher<visu>>::rbm_t rbm;
 
+    rbm.pbias_lambda = 1000;
+
     //rbm.momentum = 0.9;
-    rbm.sparsity_target = 0.08;
-    rbm.sparsity_cost = 0.9;
-    rbm.learning_rate *= 10.0;
+    //rbm.sparsity_target = 0.08;
+    //rbm.sparsity_cost = 0.9;
+    //rbm.learning_rate *= 10.0;
 
     auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
@@ -39,7 +41,7 @@ int main(int /*argc*/, char* /*argv*/[]){
         return 1;
     }
 
-    mnist::normalize_dataset(dataset);
+    mnist::binarize_dataset(dataset);
 
     rbm.train(dataset.training_images, 500);
 
