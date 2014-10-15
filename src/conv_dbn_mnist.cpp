@@ -7,10 +7,12 @@
 
 #include <iostream>
 #include <memory>
+#include <random>
 
 #define DLL_SVM_SUPPORT
 
 #include "dll/conv_dbn.hpp"
+#include "dll/cpp_utils/algorithm.hpp"
 
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
@@ -49,11 +51,21 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(5000);
+    auto dataset = mnist::read_dataset<std::vector, std::vector, double>();
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
     }
+
+    std::default_random_engine rng;
+
+    cpp::parallel_shuffle(
+        dataset.training_images.begin(), dataset.training_images.end(),
+        dataset.training_labels.begin(), dataset.training_labels.end(),
+        rng);
+
+    dataset.training_images.resize(1000);
+    dataset.training_labels.resize(1000);
 
     mnist::binarize_dataset(dataset);
 
@@ -67,13 +79,7 @@ int main(int argc, char* argv[]){
         auto dbn = std::make_unique<dbn_t>();
 
         dbn->layer<0>().pbias = 0.05;
-        dbn->layer<0>().pbias_lambda = 100;
-
-        //dbn->layer<1>().pbias = 0.05;
-        //dbn->layer<1>().pbias_lambda = 100;
-
-        std::cout << dbn->rbm_output<0>() << std::endl;
-        //std::cout << dbn->rbm_input<1>() << std::endl;
+        dbn->layer<0>().pbias_lambda = 50;
 
         dbn->display();
 
@@ -84,23 +90,23 @@ int main(int argc, char* argv[]){
             dbn->load(is);
         } else {
             std::cout << "Start pretraining" << std::endl;
-            dbn->pretrain(dataset.training_images, 100);
+            dbn->pretrain(dataset.training_images, 50);
 
             if(grid){
                 svm::rbf_grid grid;
                 grid.type = svm::grid_search_type::LINEAR;
-                grid.c_first = 0.0;
-                grid.c_last = 20;
-                grid.c_steps = 25;
-                grid.gamma_first = 0;
-                grid.gamma_last = 200;
+                grid.c_first = 0.5;
+                grid.c_last = 18;
+                grid.c_steps = 12;
+                grid.gamma_first = 0.0;
+                grid.gamma_last = 1.0;
                 grid.gamma_steps = 12;
 
-                dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 5, grid);
+                dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 4, grid);
             } else {
                 auto parameters = dll::default_svm_parameters();
-                //parameters.C = 6.22222;
-                //parameters.gamma = 88;
+                parameters.C = 2.09091;
+                parameters.gamma = 0.272727;
 
                 if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
                     std::cout << "SVM training failed" << std::endl;
