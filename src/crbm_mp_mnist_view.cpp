@@ -15,7 +15,7 @@
 
 int main(int /*argc*/, char* /*argv*/[]){
     dll::conv_rbm_mp_desc<
-            28, 12, 40, 2,
+            28, 1, 12, 40, 2,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L2>,
             dll::sparsity<dll::sparsity_method::LEE>,

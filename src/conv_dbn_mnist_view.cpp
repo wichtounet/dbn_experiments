@@ -35,8 +35,8 @@ int main(int argc, char* argv[]){
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
-            dll::conv_rbm_desc<28, 12, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-            dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>>::rbm_t
+            dll::conv_rbm_desc<28, 1, 17, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
+            dll::conv_rbm_desc<17, 40, 12, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>>::rbm_t
         >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
 
     auto dbn = std::make_unique<dbn_t>();

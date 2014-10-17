@@ -18,7 +18,7 @@ using visu = dll::opencv_rbm_visualizer<RBM, dll::rbm_ocv_config<20, true>>;
 
 int main(int /*argc*/, char* /*argv*/[]){
     dll::conv_rbm_desc<
-            28, 12, 40,
+            28, 1, 12, 40,
             dll::momentum,
             //dll::weight_decay<dll::decay_type::L2>,
             dll::sparsity<dll::sparsity_method::LEE>,

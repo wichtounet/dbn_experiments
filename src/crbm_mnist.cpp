@@ -7,9 +7,9 @@
 
 #include <iostream>
 
-#include "etl/print.hpp"
-
 #include "dll/conv_rbm.hpp"
+
+#include "etl/print.hpp"
 
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
     }
 
     dll::conv_rbm_desc<
-        28, 16, 40,
+        28, 1, 16, 40,
         dll::batch_size<25>,
         dll::visible<dll::unit_type::BINARY>
         >::rbm_t rbm;

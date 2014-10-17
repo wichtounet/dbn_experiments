@@ -157,7 +157,7 @@ int main(int argc, char* argv[]){
 
         if(simple){
             typedef dll::dbn_desc<
-                dll::dbn_layers<
+                dll::dbn_label_layers<
                 dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
                 dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
                 dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t
@@ -239,7 +239,7 @@ int main(int argc, char* argv[]){
 
         if(simple){
             typedef dll::dbn_desc<
-                dll::dbn_layers<
+                dll::dbn_label_layers<
                 dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
                 dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
                 dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t
