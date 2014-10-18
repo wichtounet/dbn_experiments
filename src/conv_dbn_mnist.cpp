@@ -69,20 +69,29 @@ int main(int argc, char* argv[]){
 
     mnist::binarize_dataset(dataset);
 
+    typedef dll::conv_dbn_desc<
+        dll::dbn_layers<
+        dll::conv_rbm_desc<28, 1, 17, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t,
+        dll::conv_rbm_desc<17, 40, 12, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
+           >>::dbn_t dbn_t;
+
+    auto dbn = std::make_unique<dbn_t>();
+
+    dbn->layer<0>().pbias = 0.05;
+    dbn->layer<0>().pbias_lambda = 50;
+
+    dbn->layer<1>().pbias = 0.05;
+    dbn->layer<1>().pbias_lambda = 50;
+
+    dbn->display();
+
+    std::cout << "RBM1: Input: " << dbn->layer<0>().input_size() << std::endl;
+    std::cout << "RBM1: Output: " << dbn->layer<0>().output_size() << std::endl;
+
+    std::cout << "RBM2: Input: " << dbn->layer<1>().input_size() << std::endl;
+    std::cout << "RBM2: Output: " << dbn->layer<1>().output_size() << std::endl;
+
     if(svm){
-        typedef dll::conv_dbn_desc<
-            dll::dbn_layers<
-            dll::conv_rbm_desc<28, 1, 17, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t//,
-            //dll::conv_rbm_desc<12, 6, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
-                >>::dbn_t dbn_t;
-
-        auto dbn = std::make_unique<dbn_t>();
-
-        dbn->layer<0>().pbias = 0.05;
-        dbn->layer<0>().pbias_lambda = 50;
-
-        dbn->display();
-
         if(load){
             std::cout << "Load from file" << std::endl;
 
@@ -121,16 +130,6 @@ int main(int argc, char* argv[]){
             test_all(dbn, dataset, dll::svm_predictor());
         }
     } else {
-        typedef dll::conv_dbn_desc<
-            dll::dbn_layers<
-            dll::conv_rbm_desc<28, 1, 17, 40, dll::momentum, dll::batch_size<50>>::rbm_t,
-            dll::conv_rbm_desc<17, 40, 12, 40, dll::momentum, dll::batch_size<50>>::rbm_t
-                >>::dbn_t dbn_t;
-
-        auto dbn = std::make_unique<dbn_t>();
-
-        dbn->display();
-
         if(load){
             std::cout << "Load from file" << std::endl;
 
