@@ -64,8 +64,8 @@ int main(int argc, char* argv[]){
         dataset.training_labels.begin(), dataset.training_labels.end(),
         rng);
 
-    dataset.training_images.resize(1000);
-    dataset.training_labels.resize(1000);
+    dataset.training_images.resize(5000);
+    dataset.training_labels.resize(5000);
 
     mnist::binarize_dataset(dataset);
 
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]){
     dbn->layer<0>().pbias_lambda = 50;
 
     dbn->layer<1>().pbias = 0.05;
-    dbn->layer<1>().pbias_lambda = 50;
+    dbn->layer<1>().pbias_lambda = 100;
 
     dbn->display();
 
@@ -100,31 +100,31 @@ int main(int argc, char* argv[]){
         } else {
             std::cout << "Start pretraining" << std::endl;
             dbn->pretrain(dataset.training_images, 50);
-
-            if(grid){
-                svm::rbf_grid grid;
-                grid.type = svm::grid_search_type::LINEAR;
-                grid.c_first = 0.5;
-                grid.c_last = 18;
-                grid.c_steps = 12;
-                grid.gamma_first = 0.0;
-                grid.gamma_last = 1.0;
-                grid.gamma_steps = 12;
-
-                dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 4, grid);
-            } else {
-                auto parameters = dll::default_svm_parameters();
-                parameters.C = 2.09091;
-                parameters.gamma = 0.272727;
-
-                if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
-                    std::cout << "SVM training failed" << std::endl;
-                }
-            }
-
-            std::ofstream os("dbn.dat", std::ofstream::binary);
-            dbn->store(os);
         }
+
+        if(grid){
+            svm::rbf_grid grid;
+            grid.type = svm::grid_search_type::LINEAR;
+            grid.c_first = 0.5;
+            grid.c_last = 18;
+            grid.c_steps = 12;
+            grid.gamma_first = 0.0;
+            grid.gamma_last = 1.0;
+            grid.gamma_steps = 12;
+
+            dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 4, grid);
+        } else {
+            auto parameters = dll::default_svm_parameters();
+            //parameters.C = 2.09091;
+            //parameters.gamma = 0.272727;
+
+            if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
+                std::cout << "SVM training failed" << std::endl;
+            }
+        }
+
+        std::ofstream os("dbn.dat", std::ofstream::binary);
+        dbn->store(os);
 
         if(!grid){
             test_all(dbn, dataset, dll::svm_predictor());
