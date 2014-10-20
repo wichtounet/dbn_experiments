@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 
+#include "dll/conv_rbm.hpp"
 #include "dll/conv_dbn.hpp"
 #include "dll/ocv_visualizer.hpp"
 

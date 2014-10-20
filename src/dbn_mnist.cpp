@@ -11,6 +11,7 @@
 
 #define DLL_SVM_SUPPORT
 
+#include "dll/rbm.hpp"
 #include "dll/dbn.hpp"
 #include "dll/test.hpp"
 #include "dll/ocv_visualizer.hpp"

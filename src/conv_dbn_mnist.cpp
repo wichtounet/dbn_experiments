@@ -11,6 +11,7 @@
 
 #define DLL_SVM_SUPPORT
 
+#include "dll/conv_rbm.hpp"
 #include "dll/conv_dbn.hpp"
 #include "dll/cpp_utils/algorithm.hpp"
 
