@@ -37,6 +37,7 @@ int main(int argc, char* argv[]){
     auto svm = false;
     auto grid = false;
     auto mp = false;
+    auto shuffle = false;
 
     for(int i = 1; i < argc; ++i){
         std::string command(argv[i]);
@@ -49,6 +50,8 @@ int main(int argc, char* argv[]){
             grid = true;
         } else if(command == "mp"){
             mp = true;
+        } else if(command == "shuffle"){
+            shuffle = true;
         }
     }
 
@@ -58,23 +61,25 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    std::default_random_engine rng;
+    if(shuffle){
+        std::default_random_engine rng;
 
-    cpp::parallel_shuffle(
-        dataset.training_images.begin(), dataset.training_images.end(),
-        dataset.training_labels.begin(), dataset.training_labels.end(),
-        rng);
+        cpp::parallel_shuffle(
+            dataset.training_images.begin(), dataset.training_images.end(),
+            dataset.training_labels.begin(), dataset.training_labels.end(),
+            rng);
+    }
 
-    dataset.training_images.resize(5000);
-    dataset.training_labels.resize(5000);
+    dataset.training_images.resize(10000);
+    dataset.training_labels.resize(10000);
 
     mnist::binarize_dataset(dataset);
 
     if(mp){
         typedef dll::conv_dbn_desc<
             dll::dbn_layers<
-            dll::conv_rbm_mp_desc<28, 1, 12, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t,
-            dll::conv_rbm_mp_desc<6, 40, 6, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
+            dll::conv_rbm_mp_desc<28, 1, 18, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t,
+            dll::conv_rbm_mp_desc<9, 40, 6, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
                 >>::dbn_t dbn_t;
 
         auto dbn = std::make_unique<dbn_t>();
@@ -101,7 +106,7 @@ int main(int argc, char* argv[]){
                 dbn->load(is);
             } else {
                 std::cout << "Start pretraining" << std::endl;
-                dbn->pretrain(dataset.training_images, 50);
+                dbn->pretrain(dataset.training_images, 10);
             }
 
             if(grid){
