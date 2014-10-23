@@ -70,8 +70,8 @@ int main(int argc, char* argv[]){
             rng);
     }
 
-    dataset.training_images.resize(10000);
-    dataset.training_labels.resize(10000);
+    //dataset.training_images.resize(10000);
+    //dataset.training_labels.resize(10000);
 
     mnist::binarize_dataset(dataset);
 
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
             dll::dbn_layers<
             dll::conv_rbm_mp_desc<28, 1, 18, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t,
             dll::conv_rbm_mp_desc<9, 40, 6, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
-                >>::dbn_t dbn_t;
+                >, dll::concatenate>::dbn_t dbn_t;
 
         auto dbn = std::make_unique<dbn_t>();
 
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]){
                 dbn->load(is);
             } else {
                 std::cout << "Start pretraining" << std::endl;
-                dbn->pretrain(dataset.training_images, 10);
+                dbn->pretrain(dataset.training_images, 50);
             }
 
             if(grid){
