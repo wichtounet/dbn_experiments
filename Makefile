@@ -11,17 +11,15 @@ LD_FLAGS  += -lsvm -lopencv_core -lopencv_imgproc -lopencv_highgui
 $(eval $(call auto_folder_compile,src))
 
 $(eval $(call add_src_executable,rbm_mnist,rbm_mnist.cpp))
-$(eval $(call add_src_executable,rbm_mnist_view,rbm_mnist_view.cpp))
 $(eval $(call add_src_executable,crbm_mnist,crbm_mnist.cpp))
 $(eval $(call add_src_executable,crbm_mnist_view,crbm_mnist_view.cpp))
-$(eval $(call add_src_executable,crbm_mp_mnist_view,crbm_mp_mnist_view.cpp))
 $(eval $(call add_src_executable,dbn_mnist,dbn_mnist.cpp))
 $(eval $(call add_src_executable,dbn_mnist_view,dbn_mnist_view.cpp))
 $(eval $(call add_src_executable,conv_dbn_mnist,conv_dbn_mnist.cpp))
 $(eval $(call add_src_executable,conv_dbn_mnist_view,conv_dbn_mnist_view.cpp))
 
-release: release/bin/rbm_mnist release/bin/rbm_mnist_view release/bin/crbm_mnist_view release/bin/dbn_mnist release/bin/crbm_mnist release/bin/conv_dbn_mnist release/bin/conv_dbn_mnist_view release/bin/crbm_mp_mnist_view
-debug: debug/bin/rbm_mnist debug/bin/rbm_mnist_view debug/bin/crbm_mnist_view debug/bin/dbn_mnist debug/bin/crbm_mnist debug/bin/conv_dbn_mnist debug/bin/dbn_mnist_view debug/bin/crbm_mp_mnist_view
+release: release/bin/rbm_mnist release/bin/crbm_mnist_view release/bin/dbn_mnist release/bin/crbm_mnist release/bin/conv_dbn_mnist release/bin/conv_dbn_mnist_view
+debug: debug/bin/rbm_mnist debug/bin/crbm_mnist_view debug/bin/dbn_mnist debug/bin/crbm_mnist debug/bin/conv_dbn_mnist debug/bin/dbn_mnist_view
 
 all: release debug
 
