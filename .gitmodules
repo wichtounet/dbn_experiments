@@ -10,3 +10,6 @@
 	path = make-utils
 	url = https://github.com/wichtounet/make-utils.git
 	branch = master
+[submodule "icdar"]
+	path = icdar
+	url = https://github.com/wichtounet/icdar.git
