@@ -26,6 +26,8 @@ int main(){
     std::cout << dataset.training_images.size() << " training images" << std::endl;
     std::cout << dataset.test_images.size() << " test images" << std::endl;
 
+    //TODO What about randomization ? 
+
     for(auto& image : dataset.training_images){
         std::vector<std::vector<uint8_t>> windows;
 
