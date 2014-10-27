@@ -7,6 +7,10 @@
 
 #include <iostream>
 
+#include "dll/conv_rbm.hpp"
+#include "dll/conv_dbn.hpp"
+#include "dll/cpp_utils/algorithm.hpp"
+
 #include "icdar/icdar_reader.hpp"
 
 constexpr const std::size_t context = 5;
@@ -26,11 +30,12 @@ int main(){
     std::cout << dataset.training_images.size() << " training images" << std::endl;
     std::cout << dataset.test_images.size() << " test images" << std::endl;
 
-    //TODO What about randomization ? 
+    //TODO What about randomization ?
+
+    std::vector<std::vector<uint8_t>> windows;
 
     for(auto& image : dataset.training_images){
-        std::vector<std::vector<uint8_t>> windows;
-        windows.reserve(image.width * image.height);
+        windows.reserve(windows.size() + image.width * image.height);
 
         for(std::size_t i = context; i < image.width - context; ++i){
             for(std::size_t j = context; j < image.height - context; ++j){
@@ -46,9 +51,24 @@ int main(){
                 }
             }
         }
-
-        std::cout << windows.size() << " windows extracted" << std::endl;
     }
+
+    //TODO Normalization
+    //TODO Gaussian
+
+    std::cout << windows.size() << " windows extracted" << std::endl;
+
+    typedef dll::conv_dbn_desc<
+        dll::dbn_layers<
+            dll::conv_rbm_desc<window, 1, 5, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
+            >>::dbn_t dbn_t;
+
+    auto dbn = std::make_unique<dbn_t>();
+
+    dbn->layer<0>().pbias = 0.05;
+    dbn->layer<0>().pbias_lambda = 50;
+
+    dbn->pretrain(windows, 50);
 
     return 0;
 }
