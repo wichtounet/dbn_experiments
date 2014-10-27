@@ -15,7 +15,7 @@ constexpr const std::size_t window = context * 2 + 1;
 int main(){
     auto dataset = icdar::read_2013_dataset(
         "/home/wichtounet/datasets/icdar_2013_natural/train",
-        "/home/wichtounet/datasets/icdar_2013_natural/test", 1, 1);
+        "/home/wichtounet/datasets/icdar_2013_natural/test", 5, 1);
 
     if(dataset.training_labels.empty() || dataset.training_images.empty()){
         std::cout << "Problem while reading the dataset" << std::endl;
@@ -28,28 +28,24 @@ int main(){
 
     for(auto& image : dataset.training_images){
         std::vector<std::vector<uint8_t>> windows;
-
-        std::cout << image.width << "x" << image.height << std::endl;
+        windows.reserve(image.width * image.height);
 
         for(std::size_t i = context; i < image.width - context; ++i){
             for(std::size_t j = context; j < image.height - context; ++j){
 
                 windows.emplace_back(window * window);
 
-                //std::cout << i << ":" << j << std::endl;
-
                 for(std::size_t a = i - context; a < i - context + window; ++a){
-                    for(std::size_t b = j - context; b <= j - context + window; ++b){
-                        //std::cout << a << "<->" << b << std::endl;
-                        //std::cout << ((a * image.height) + b) << std::endl;
-                        //std::cout << ((i -context + a) * window + (j - context + b)) << std::endl;
-                        windows.back().at((i - context + a) * window + (j - context + b)) = 1;//image.pixels.at(a * image.height + b).r;
+                    for(std::size_t b = j - context; b < j - context + window; ++b){
+                        auto w_i = (a - (i - context));
+                        auto w_j = (b - (j - context));
+                        windows.back().at(w_i * window + w_j) = image.pixels.at(a * image.height + b).r;
                     }
                 }
-
             }
         }
 
+        std::cout << windows.size() << " windows extracted" << std::endl;
     }
 
     return 0;
