@@ -13,6 +13,8 @@
 
 #include "icdar/icdar_reader.hpp"
 
+#include "mnist/mnist_utils.hpp" //For normalization only
+
 constexpr const std::size_t context = 5;
 constexpr const std::size_t window = context * 2 + 1;
 
@@ -32,7 +34,7 @@ int main(){
 
     //TODO What about randomization ?
 
-    std::vector<std::vector<uint8_t>> windows;
+    std::vector<std::vector<float>> windows;
 
     for(auto& image : dataset.training_images){
         windows.reserve(windows.size() + image.width * image.height);
@@ -53,14 +55,17 @@ int main(){
         }
     }
 
-    //TODO Normalization
-    //TODO Gaussian
+    mnist::normalize_each(windows);
 
     std::cout << windows.size() << " windows extracted" << std::endl;
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
-            dll::conv_rbm_desc<window, 1, 5, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
+            dll::conv_rbm_desc<window, 1, 5, 40,
+                dll::momentum, dll::batch_size<50>,
+                dll::weight_decay<dll::decay_type::L2>,
+                dll::visible<dll::unit_type::GAUSSIAN>,
+                dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
             >>::dbn_t dbn_t;
 
     auto dbn = std::make_unique<dbn_t>();
