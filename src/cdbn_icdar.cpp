@@ -8,9 +8,11 @@
 #include <iostream>
 
 #define DLL_PARALLEL
+#define DLL_SVM_SUPPORT
 
 #include "dll/conv_rbm.hpp"
 #include "dll/conv_dbn.hpp"
+#include "dll/test.hpp"
 #include "dll/cpp_utils/algorithm.hpp"
 #include "dll/cpp_utils/data.hpp"
 
@@ -91,6 +93,9 @@ int main(){
     dbn->layer<0>().pbias_lambda = 50;
 
     dbn->pretrain(windows, 50);
+    dbn->svm_train(windows, labels);
+
+    std::cout << "Pixel Accuracy:" << dll::test_set(dbn, windows, labels, dll::svm_predictor()) << std::endl;
 
     return 0;
 }
