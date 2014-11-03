@@ -87,6 +87,8 @@ int main(){
                 dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
             >>::dbn_t dbn_t;
 
+    std::cout << "DBN is " << sizeof(dbn_t) << " bytes long" << std::endl;
+
     auto dbn = std::make_unique<dbn_t>();
 
     dbn->layer<0>().pbias = 0.05;
