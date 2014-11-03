@@ -10,10 +10,9 @@
 #include "dll/conv_rbm.hpp"
 #include "dll/conv_dbn.hpp"
 #include "dll/cpp_utils/algorithm.hpp"
+#include "dll/cpp_utils/data.hpp"
 
 #include "icdar/icdar_reader.hpp"
-
-#include "mnist/mnist_utils.hpp" //For normalization only
 
 constexpr const std::size_t context = 5;
 constexpr const std::size_t window = context * 2 + 1;
@@ -55,7 +54,7 @@ int main(){
         }
     }
 
-    mnist::normalize_each(windows);
+    cpp::normalize_each(windows);
 
     std::cout << windows.size() << " windows extracted" << std::endl;
 
