@@ -43,10 +43,9 @@ int main(){
         return -1;
     }
 
+    std::cout << "Dataset" << std::endl;
     std::cout << dataset.training_images.size() << " training images" << std::endl;
     std::cout << dataset.test_images.size() << " test images" << std::endl;
-
-    //TODO What about randomization ?
 
     std::vector<std::vector<float>> windows;
     std::vector<std::size_t> labels;
@@ -74,30 +73,45 @@ int main(){
         }
     }
 
+    std::cout << window << std::endl;
+
+    windows.resize(1000);
+    labels.resize(1000);
+
     cpp::normalize_each(windows);
 
+    std::cout << "Extraction" << std::endl;
+    std::cout << dataset.training_images.size() << " images" << std::endl;
+    std::cout << window << "x" << window << " windows" << std::endl;
     std::cout << windows.size() << " windows and labels extracted" << std::endl;
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
-            dll::conv_rbm_desc<window, 1, 5, 40,
-                dll::momentum, dll::batch_size<50>,
-                dll::weight_decay<dll::decay_type::L2>,
-                dll::visible<dll::unit_type::GAUSSIAN>,
-                dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
+            dll::conv_rbm_desc<window, 1, 5, 40
+                , dll::momentum
+                , dll::batch_size<50>
+                , dll::weight_decay<dll::decay_type::L2>
+                , dll::visible<dll::unit_type::GAUSSIAN>
+                , dll::sparsity<dll::sparsity_method::LEE>
+            >::rbm_t
             >>::dbn_t dbn_t;
-
-    std::cout << "DBN is " << sizeof(dbn_t) << " bytes long" << std::endl;
 
     auto dbn = std::make_unique<dbn_t>();
 
+    std::cout << "DBN is " << sizeof(dbn_t) << " bytes long" << std::endl;
+    std::cout << "DBN input is " << dbn->input_size() << std::endl;
+    std::cout << "DBN output is " << dbn->output_size() << std::endl;
+
     dbn->layer<0>().pbias = 0.05;
-    dbn->layer<0>().pbias_lambda = 50;
+    dbn->layer<0>().pbias_lambda = 100;
+
+    //TODO What about randomization ?
 
     dbn->pretrain(windows, 50);
     dbn->svm_train(windows, labels);
 
-    std::cout << "Pixel Accuracy:" << dll::test_set(dbn, windows, labels, dll::svm_predictor()) << std::endl;
+    double error = dll::test_set(dbn, windows, labels, dll::svm_predictor());
+    std::cout << "Pixel error:" << error << std::endl;
 
     return 0;
 }
