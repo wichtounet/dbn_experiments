@@ -32,26 +32,10 @@ bool is_text(const Label& label, std::size_t x, std::size_t y){
     return false;
 }
 
-int main(){
-    auto dataset = icdar::read_2013_dataset(
-        "/home/wichtounet/datasets/icdar_2013_natural/train",
-        "/home/wichtounet/datasets/icdar_2013_natural/test", 5, 1);
-
-    if(dataset.training_labels.empty() || dataset.training_images.empty()){
-        std::cout << "Problem while reading the dataset" << std::endl;
-
-        return -1;
-    }
-
-    std::cout << "Dataset" << std::endl;
-    std::cout << dataset.training_images.size() << " training images" << std::endl;
-    std::cout << dataset.test_images.size() << " test images" << std::endl;
-
-    std::vector<std::vector<float>> windows;
-    std::vector<std::size_t> labels;
-
-    for(std::size_t image_id = 0; image_id < dataset.training_images.size(); ++image_id){
-        auto& image = dataset.training_images[image_id];
+template<typename Images, typename Labels>
+void extract(std::vector<std::vector<float>>& windows, std::vector<std::size_t>& labels, Images& d_images, Labels& d_labels){
+    for(std::size_t image_id = 0; image_id < d_images.size(); ++image_id){
+        auto& image = d_images[image_id];
 
         windows.reserve(windows.size() + image.width * image.height);
 
@@ -60,7 +44,7 @@ int main(){
 
                 windows.emplace_back(window * window);
 
-                labels.push_back(is_text(dataset.training_labels[image_id], i, j) ? 1 : 0);
+                labels.push_back(is_text(d_labels[image_id], i, j) ? 1 : 0);
 
                 for(std::size_t a = i - context; a < i - context + window; ++a){
                     for(std::size_t b = j - context; b < j - context + window; ++b){
@@ -72,18 +56,50 @@ int main(){
             }
         }
     }
+}
 
-    std::cout << window << std::endl;
+int main(){
+    auto dataset = icdar::read_2013_dataset(
+        "/home/wichtounet/datasets/icdar_2013_natural/train",
+        "/home/wichtounet/datasets/icdar_2013_natural/test", 5, 1);
 
-    windows.resize(1000);
-    labels.resize(1000);
+    if(dataset.training_labels.empty() || dataset.training_images.empty()){
+        std::cout << "Problem while reading the dataset" << std::endl;
 
-    cpp::normalize_each(windows);
+        return -1;
+    }
+
+    std::cout << window << "x" << window << " window dimension" << std::endl;
+
+    std::cout << "Dataset" << std::endl;
+    std::cout << dataset.training_images.size() << " training images" << std::endl;
+    std::cout << dataset.test_images.size() << " test images" << std::endl;
+
+    std::vector<std::vector<float>> training_windows;
+    std::vector<std::size_t> training_labels;
+
+    std::vector<std::vector<float>> test_windows;
+    std::vector<std::size_t> test_labels;
+
+    extract(training_windows, training_labels, dataset.training_images, dataset.training_labels);
+
+    training_windows.resize(5000);
+    training_labels.resize(5000);
+
+    extract(test_windows, test_labels, dataset.test_images, dataset.test_labels);
+
+    test_windows.resize(5000);
+    test_labels.resize(5000);
+
+    cpp::normalize_each(training_windows);
+    cpp::normalize_each(test_windows);
 
     std::cout << "Extraction" << std::endl;
-    std::cout << dataset.training_images.size() << " images" << std::endl;
-    std::cout << window << "x" << window << " windows" << std::endl;
-    std::cout << windows.size() << " windows and labels extracted" << std::endl;
+    std::cout << dataset.training_images.size() << " training images" << std::endl;
+    std::cout << training_windows.size() << " training windows and labels extracted" << std::endl;
+
+    std::cout << dataset.test_images.size() << " test images" << std::endl;
+    std::cout << test_windows.size() << " test windows and labels extracted" << std::endl;
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
@@ -107,11 +123,14 @@ int main(){
 
     //TODO What about randomization ?
 
-    dbn->pretrain(windows, 50);
-    dbn->svm_train(windows, labels);
+    dbn->pretrain(training_windows, 50);
+    dbn->svm_train(training_windows, training_labels);
 
-    double error = dll::test_set(dbn, windows, labels, dll::svm_predictor());
-    std::cout << "Pixel error:" << error << std::endl;
+    double training_error = dll::test_set(dbn, training_windows, training_labels, dll::svm_predictor());
+    std::cout << "Pixel error (training):" << training_error << std::endl;
+
+    double test_error = dll::test_set(dbn, test_windows, test_labels, dll::svm_predictor());
+    std::cout << "Pixel error (test):" << test_error << std::endl;
 
     return 0;
 }
