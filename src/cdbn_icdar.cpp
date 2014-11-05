@@ -58,6 +58,11 @@ void extract(std::vector<std::vector<float>>& windows, std::vector<std::size_t>&
     }
 }
 
+template<typename Container>
+std::size_t count_one(const Container& labels){
+    return std::count(labels.begin(), labels.end(), 1);
+}
+
 int main(){
     auto dataset = icdar::read_2013_dataset(
         "/home/wichtounet/datasets/icdar_2013_natural/train",
@@ -68,6 +73,9 @@ int main(){
 
         return -1;
     }
+
+    std::random_device rd;
+    std::mt19937_64 g(28);
 
     std::cout << window << "x" << window << " window dimension" << std::endl;
 
@@ -83,27 +91,44 @@ int main(){
 
     extract(training_windows, training_labels, dataset.training_images, dataset.training_labels);
 
-    training_windows.resize(5000);
-    training_labels.resize(5000);
+    cpp::parallel_shuffle(training_windows.begin(), training_windows.end(), training_labels.begin(), training_labels.end(), g);
+
+    auto total_training = training_windows.size();
+    training_windows.resize(10000);
+    training_labels.resize(10000);
 
     extract(test_windows, test_labels, dataset.test_images, dataset.test_labels);
 
+    cpp::parallel_shuffle(test_windows.begin(), test_windows.end(), test_labels.begin(), test_labels.end(), g);
+
+    auto total_test = test_windows.size();
     test_windows.resize(5000);
     test_labels.resize(5000);
 
+    //Normalize everything for Gaussian visible units
     cpp::normalize_each(training_windows);
     cpp::normalize_each(test_windows);
 
     std::cout << "Extraction" << std::endl;
     std::cout << dataset.training_images.size() << " training images" << std::endl;
-    std::cout << training_windows.size() << " training windows and labels extracted" << std::endl;
+    std::cout << training_windows.size() << "(" << total_training << ") training windows and labels extracted" << std::endl;
+    std::cout << count_one(training_labels) << " text window pixels" << std::endl;
 
     std::cout << dataset.test_images.size() << " test images" << std::endl;
-    std::cout << test_windows.size() << " test windows and labels extracted" << std::endl;
+    std::cout << test_windows.size() << "(" << total_test << ") test windows and labels extracted" << std::endl;
+    std::cout << count_one(test_labels) << " text window pixels" << std::endl;
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
             dll::conv_rbm_desc<window, 1, 5, 40
+                , dll::momentum
+                , dll::batch_size<50>
+                , dll::weight_decay<dll::decay_type::L2>
+                , dll::visible<dll::unit_type::GAUSSIAN>
+                , dll::sparsity<dll::sparsity_method::LEE>
+            >::rbm_t
+            ,
+            dll::conv_rbm_desc<5, 40, 3, 40
                 , dll::momentum
                 , dll::batch_size<50>
                 , dll::weight_decay<dll::decay_type::L2>
@@ -118,8 +143,11 @@ int main(){
     std::cout << "DBN input is " << dbn->input_size() << std::endl;
     std::cout << "DBN output is " << dbn->output_size() << std::endl;
 
-    dbn->layer<0>().pbias = 0.05;
+    dbn->layer<0>().pbias = 0.07;
     dbn->layer<0>().pbias_lambda = 100;
+
+    dbn->layer<1>().pbias = 0.07;
+    dbn->layer<1>().pbias_lambda = 100;
 
     //TODO What about randomization ?
 
