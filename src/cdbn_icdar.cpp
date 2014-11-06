@@ -18,6 +18,8 @@
 
 #include "icdar/icdar_reader.hpp"
 
+#include <opencv2/opencv.hpp>
+
 constexpr const std::size_t deep_context = 5;
 constexpr const std::size_t deep_window = deep_context * 2 + 1;
 
@@ -95,20 +97,18 @@ Images large_pad(Images& d_images){
 
 template<typename Images>
 void large_extract(std::vector<std::vector<float>>& patches, const Images& d_images){
-    for(std::size_t image_id = 0; image_id < d_images.size(); ++image_id){
-        auto& image = d_images[image_id];
-
+    for(auto& image : d_images){
         patches.reserve(patches.size() + (image.width / large_window) * (image.height / large_window));
 
-        for(std::size_t i = 0; i < image.width; i += large_window){
-            for(std::size_t j = 0; j < image.height; j += large_window){
+        for(std::size_t i = 0; i < image.height; i += large_window){
+            for(std::size_t j = 0; j < image.width; j += large_window){
                 patches.emplace_back(large_window * large_window);
 
                 for(std::size_t a = i; a < i + large_window; ++a){
                     for(std::size_t b = j; b < j + large_window; ++b){
                         auto w_i = a - i;
                         auto w_j = b - j;
-                        patches.back().at(w_i * large_window + w_j) = image.pixels.at(a * image.height + b).r;
+                        patches.back().at(w_i * large_window + w_j) = image.pixels.at(a * image.width + b).r;
                     }
                 }
             }
@@ -221,6 +221,43 @@ int deep_wise(){
     return 0;
 }
 
+template<typename Images>
+void debug_padded(const Images& images){
+    cv::namedWindow("Padded", cv::WINDOW_NORMAL);
+
+    for(auto& image : images){
+        cv::Mat buffer_image(cv::Size(image.width, image.height), CV_8UC1);
+        //buffer_image = cv::Scalar(255);
+
+        for(std::size_t row = 0; row < image.height; ++row){
+            for(std::size_t col = 0; col < image.width; ++col){
+                buffer_image.at<uint8_t>(row, col) = 255 * image.pixels[row * image.width + col].r;
+            }
+        }
+
+        cv::imshow("Padded", buffer_image);
+        cv::waitKey(0);
+    }
+}
+
+template<typename Images>
+void debug_patches(const Images& patches){
+    cv::namedWindow("Patches", cv::WINDOW_NORMAL);
+
+    for(auto& patch : patches){
+        cv::Mat buffer_image(cv::Size(large_window, large_window), CV_8UC1);
+
+        for(std::size_t row = 0; row < large_window; ++row){
+            for(std::size_t col = 0; col < large_window; ++col){
+                buffer_image.at<uint8_t>(row, col) = 255.0 * patch[row * large_window + col];
+            }
+        }
+
+        cv::imshow("Patches", buffer_image);
+        cv::waitKey(0);
+    }
+}
+
 int large_wise(){
     auto dataset = icdar::read_2013_dataset(
         "/home/wichtounet/datasets/icdar_2013_natural/train",
@@ -259,6 +296,9 @@ int large_wise(){
     std::cout << training_patches.size() << " training patches" << std::endl;
     std::cout << test_images_padded.size() << " test images padded" << std::endl;
     std::cout << test_patches.size() << " test patches\n\n";
+
+    //debug_padded();
+    //debug_patches();
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
