@@ -13,6 +13,8 @@
 #include "dll/conv_rbm.hpp"
 #include "dll/conv_dbn.hpp"
 #include "dll/test.hpp"
+#include "dll/ocv_visualizer.hpp"
+
 #include "dll/cpp_utils/algorithm.hpp"
 #include "dll/cpp_utils/data.hpp"
 
@@ -302,16 +304,18 @@ int large_wise(){
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
-            dll::conv_rbm_desc<large_window, 1, 128, 25
+            dll::conv_rbm_desc<large_window, 1, 128, 40
                 , dll::momentum
                 , dll::batch_size<8>
                 , dll::weight_decay<dll::decay_type::L2>
                 , dll::visible<dll::unit_type::GAUSSIAN>
                 //, dll::sparsity<dll::sparsity_method::LEE>
             >::rbm_t
-            >>::dbn_t dbn_t;
+            >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
 
     auto dbn = std::make_unique<dbn_t>();
+
+    dbn->layer<0>().learning_rate /= 100;
 
     std::cout << "DBN is " << sizeof(dbn_t) << " bytes long" << std::endl;
     std::cout << "DBN input is " << dbn->input_size() << std::endl;
