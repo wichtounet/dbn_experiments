@@ -27,6 +27,7 @@ constexpr const std::size_t deep_window = deep_context * 2 + 1;
 
 constexpr const std::size_t large_window = 135;
 constexpr const std::size_t large_first_border = 8;
+constexpr const std::size_t large_features = 25;
 
 template<typename Label>
 bool is_text(const Label& label, std::size_t x, std::size_t y){
@@ -260,6 +261,62 @@ void debug_patches(const Images& patches){
     }
 }
 
+template<typename DBN, typename Labels, typename Images, typename Patches, typename SFeatures, typename SLabels, typename RNG>
+void large_svm_extract(DBN& dbn, const Labels& labels, const Images& images, const Images& padded_images, const Patches& patches, SFeatures& svm_features, SLabels& svm_labels, std::size_t limit, RNG&& g){
+    std::cout << "Extraction for SVM..." << std::endl;
+
+    std::vector<std::vector<float>> rbm_features;
+
+    for(auto& patch : patches){
+        rbm_features.emplace_back(DBN::output_size());
+        dbn.activation_probabilities(patch, rbm_features.back());
+    }
+
+    std::size_t prev_patches = 0;
+
+    for(std::size_t i_i = 0; i_i < images.size(); ++i_i){
+        auto& image = images[i_i];
+        auto& padded_image = padded_images[i_i];
+
+        for(std::size_t y = 0; y < image.height; ++y){
+            for(std::size_t x = 0; x < image.width; ++x){
+                //Indexes in padded images
+                auto global_y = y + large_first_border;
+                auto global_x = x + large_first_border;
+
+                //Index of the patch
+                auto patch_y = global_y / large_window;
+                auto patch_x = global_x / large_window;
+
+                //Index inside the patch
+                auto local_y = y % large_window;
+                auto local_x = x % large_window;
+
+                auto& patch = rbm_features[prev_patches + (patch_y * (padded_image.width / large_window) + patch_x)];
+
+                svm_features.emplace_back(large_features);
+
+                for(std::size_t i = 0; i < large_features; ++i){
+                    svm_features.back()[i] = patch[local_y * large_window + local_x + i];
+                }
+
+                svm_labels.push_back(is_text(labels[i_i], x, y) ? 1 : 0);
+            }
+        }
+
+        prev_patches += padded_image.height / large_window * padded_image.width / large_window;
+    }
+
+    cpp::parallel_shuffle(svm_features.begin(), svm_features.end(), svm_labels.begin(), svm_labels.end(), g);
+    svm_features.resize(limit);
+    svm_labels.resize(limit);
+
+    svm_features.shrink_to_fit();
+    svm_labels.shrink_to_fit();
+
+    std::cout << "... done" << std::endl;
+}
+
 int large_wise(){
     auto dataset = icdar::read_2013_dataset(
         "/home/wichtounet/datasets/icdar_2013_natural/train",
@@ -296,37 +353,100 @@ int large_wise(){
     std::cout << "Extraction" << std::endl;
     std::cout << training_images_padded.size() << " training images padded" << std::endl;
     std::cout << training_patches.size() << " training patches" << std::endl;
-    std::cout << test_images_padded.size() << " test images padded" << std::endl;
-    std::cout << test_patches.size() << " test patches\n\n";
+    std::cout << test_images_padded.size() << " test images padded" << std::endl; std::cout << test_patches.size() << " test patches\n\n";
 
     //debug_padded();
     //debug_patches();
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
-            dll::conv_rbm_desc<large_window, 1, 128, 40
+            dll::conv_rbm_desc<large_window, 1, 128, large_features
                 , dll::momentum
                 , dll::batch_size<8>
                 , dll::weight_decay<dll::decay_type::L2>
                 , dll::visible<dll::unit_type::GAUSSIAN>
                 //, dll::sparsity<dll::sparsity_method::LEE>
             >::rbm_t
-            >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
+            >
+            //, dll::watcher<dll::opencv_dbn_visualizer>
+            >::dbn_t dbn_t;
 
     auto dbn = std::make_unique<dbn_t>();
-
-    dbn->layer<0>().learning_rate /= 100;
 
     std::cout << "DBN is " << sizeof(dbn_t) << " bytes long" << std::endl;
     std::cout << "DBN input is " << dbn->input_size() << std::endl;
     std::cout << "DBN output is " << dbn->output_size() << std::endl;
 
-    //dbn->layer<0>().pbias = 0.07;
-    //dbn->layer<0>().pbias_lambda = 100;
+    dbn->layer<0>().learning_rate /= 100;
+    dbn->layer<0>().pbias = 0.1;
+    dbn->layer<0>().pbias_lambda = 100;
 
-    dbn->pretrain(training_patches, 5);
+    dbn->load("icdar.dbn");
 
-    //TODO Classify
+    //dbn->pretrain(training_patches, 10);
+    //dbn->store("icdar.dbn");
+
+    svm::model model;
+
+    //Make it quiet
+    svm::make_quiet();
+
+    //Train and test on training set
+    {
+        svm::problem training_problem;
+
+        {
+            std::vector<std::vector<float>> features;
+            std::vector<uint8_t> labels;
+
+            large_svm_extract(*dbn, dataset.training_labels, dataset.training_images, training_images_padded, training_patches, features, labels, 25000, g);
+
+            std::cout << features.size() << " training feature vectors extracted" << std::endl;
+            std::cout << count_one(labels) / static_cast<double>(labels.size()) << "% text pixel" << std::endl;
+
+            training_problem = svm::make_problem(labels, features);
+        }
+
+        auto mnist_parameters = svm::default_parameters();
+
+        mnist_parameters.svm_type = C_SVC;
+        mnist_parameters.kernel_type = RBF;
+        mnist_parameters.probability = 1;
+        mnist_parameters.C = 2.8;
+        mnist_parameters.gamma = 0.0073;
+
+        //Make sure parameters are not too messed up
+        if(!svm::check(training_problem, mnist_parameters)){
+            return 1;
+        }
+
+        model = svm::train(training_problem, mnist_parameters);
+
+        std::cout << model.classes() << " classes found" << std::endl;
+
+        std::cout << "Test on training set" << std::endl;
+        svm::test_model(training_problem, model);
+    }
+
+    //Test on test set
+    {
+        svm::problem test_problem;
+
+        {
+            std::vector<std::vector<float>> features;
+            std::vector<uint8_t> labels;
+
+            large_svm_extract(*dbn, dataset.test_labels, dataset.test_images, test_images_padded, test_patches, features, labels, 25000, g);
+
+            std::cout << features.size() << " test feature vectors extracted" << std::endl;
+            std::cout << count_one(labels) / static_cast<double>(labels.size()) << "% text pixel" << std::endl;
+
+            test_problem = svm::make_problem(labels, features);
+        }
+
+        std::cout << "Test on test set" << std::endl;
+        svm::test_model(test_problem, model);
+    }
 
     return 0;
 }
