@@ -27,7 +27,7 @@ constexpr const std::size_t deep_window = deep_context * 2 + 1;
 
 constexpr const std::size_t large_window = 135;
 constexpr const std::size_t large_first_border = 8;
-constexpr const std::size_t large_features = 25;
+constexpr const std::size_t large_features = 40;
 
 template<typename Label>
 bool is_text(const Label& label, std::size_t x, std::size_t y){
@@ -388,6 +388,8 @@ int large_wise(){
 
     svm::model model;
 
+    //TODO Maybe think of scaling features
+
     //Make it quiet
     svm::make_quiet();
 
@@ -399,7 +401,7 @@ int large_wise(){
             std::vector<std::vector<float>> features;
             std::vector<uint8_t> labels;
 
-            large_svm_extract(*dbn, dataset.training_labels, dataset.training_images, training_images_padded, training_patches, features, labels, 25000, g);
+            large_svm_extract(*dbn, dataset.training_labels, dataset.training_images, training_images_padded, training_patches, features, labels, 50000, g);
 
             std::cout << features.size() << " training feature vectors extracted" << std::endl;
             std::cout << count_one(labels) / static_cast<double>(labels.size()) << "% text pixel" << std::endl;
@@ -412,8 +414,8 @@ int large_wise(){
         mnist_parameters.svm_type = C_SVC;
         mnist_parameters.kernel_type = RBF;
         mnist_parameters.probability = 1;
-        mnist_parameters.C = 2.8;
-        mnist_parameters.gamma = 0.0073;
+        //mnist_parameters.C = 2.8;
+        //mnist_parameters.gamma = 0.0073;
 
         //Make sure parameters are not too messed up
         if(!svm::check(training_problem, mnist_parameters)){
@@ -427,6 +429,9 @@ int large_wise(){
         std::cout << "Test on training set" << std::endl;
         svm::test_model(training_problem, model);
     }
+
+    //Testing is too memory expensive for now
+    return 0;
 
     //Test on test set
     {
