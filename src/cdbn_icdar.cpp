@@ -255,7 +255,6 @@ void debug_patches(const Images& patches){
                 buffer_image.at<uint8_t>(row, col) = 255.0 * patch[row * large_window + col];
             }
         }
-
         cv::imshow("Patches", buffer_image);
         cv::waitKey(0);
     }
@@ -308,8 +307,32 @@ void large_svm_extract(DBN& dbn, const Labels& labels, const Images& images, con
     }
 
     cpp::parallel_shuffle(svm_features.begin(), svm_features.end(), svm_labels.begin(), svm_labels.end(), g);
-    svm_features.resize(limit);
-    svm_labels.resize(limit);
+
+    std::size_t count_0 = 0;
+    std::size_t count_1 = 0;
+
+    SFeatures svm_features_tmp;
+    SLabels svm_labels_tmp;
+
+    for(std::size_t i_i = 0; i_i < svm_features.size() && svm_features_tmp.size() < limit; ++i_i){
+        auto& label = svm_labels[i_i];
+
+        if(label == 1 && (count_1 < 2 * count_0 || count_1 < 100)){
+            ++count_1;
+            svm_features_tmp.push_back(svm_features[i_i]);
+            svm_labels_tmp.push_back(label);
+        } else if(label == 0 && (count_0 < 2 * count_1 || count_0 < 100)){
+            ++count_0;
+            svm_features_tmp.push_back(svm_features[i_i]);
+            svm_labels_tmp.push_back(label);
+        }
+    }
+
+    std::cout << count_0 << std::endl;
+    std::cout << count_1 << std::endl;
+
+    svm_features = std::move(svm_features_tmp);
+    svm_labels = std::move(svm_labels_tmp);
 
     svm_features.shrink_to_fit();
     svm_labels.shrink_to_fit();
@@ -320,7 +343,7 @@ void large_svm_extract(DBN& dbn, const Labels& labels, const Images& images, con
 int large_wise(){
     auto dataset = icdar::read_2013_dataset(
         "/home/wichtounet/datasets/icdar_2013_natural/train",
-        "/home/wichtounet/datasets/icdar_2013_natural/test", 10, 10);
+        "/home/wichtounet/datasets/icdar_2013_natural/test", 20, 1);
 
     if(dataset.training_labels.empty() || dataset.training_images.empty()){
         std::cout << "Problem while reading the dataset" << std::endl;
@@ -381,17 +404,17 @@ int large_wise(){
     dbn->layer<0>().pbias = 0.1;
     dbn->layer<0>().pbias_lambda = 100;
 
-    dbn->load("icdar.dbn");
+    //dbn->load("icdar.dbn");
 
-    //dbn->pretrain(training_patches, 10);
-    //dbn->store("icdar.dbn");
+    dbn->pretrain(training_patches, 10);
+    dbn->store("icdar.dbn");
 
     svm::model model;
 
     //TODO Maybe think of scaling features
 
     //Make it quiet
-    svm::make_quiet();
+    //svm::make_quiet();
 
     //Train and test on training set
     {
@@ -401,7 +424,7 @@ int large_wise(){
             std::vector<std::vector<float>> features;
             std::vector<uint8_t> labels;
 
-            large_svm_extract(*dbn, dataset.training_labels, dataset.training_images, training_images_padded, training_patches, features, labels, 50000, g);
+            large_svm_extract(*dbn, dataset.training_labels, dataset.training_images, training_images_padded, training_patches, features, labels, 100000, g);
 
             std::cout << features.size() << " training feature vectors extracted" << std::endl;
             std::cout << count_one(labels) / static_cast<double>(labels.size()) << "% text pixel" << std::endl;
