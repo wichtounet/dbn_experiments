@@ -264,75 +264,94 @@ template<typename DBN, typename Labels, typename Images, typename Patches, typen
 void large_svm_extract(DBN& dbn, const Labels& labels, const Images& images, const Images& padded_images, const Patches& patches, SFeatures& svm_features, SLabels& svm_labels, std::size_t limit, RNG&& g){
     std::cout << "Extraction for SVM..." << std::endl;
 
+    //1. Get features from DBN
+
     std::vector<std::vector<float>> rbm_features;
+    rbm_features.reserve(patches.size());
 
     for(auto& patch : patches){
         rbm_features.emplace_back(DBN::output_size());
         dbn.activation_probabilities(patch, rbm_features.back());
     }
 
-    std::size_t prev_patches = 0;
+    std::cout << "Features extracted for " << patches.size() << " patches" << std::endl;
 
+    //2. Extract all locations
+
+    std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>> locations;
+    locations.reserve(images.size() * 1000000);
+
+    std::size_t prev_patches = 0;
     for(std::size_t i_i = 0; i_i < images.size(); ++i_i){
         auto& image = images[i_i];
         auto& padded_image = padded_images[i_i];
 
         for(std::size_t y = 0; y < image.height; ++y){
             for(std::size_t x = 0; x < image.width; ++x){
-                //Indexes in padded images
-                auto global_y = y + large_first_border;
-                auto global_x = x + large_first_border;
-
-                //Index of the patch
-                auto patch_y = global_y / large_window;
-                auto patch_x = global_x / large_window;
-
-                //Index inside the patch
-                auto local_y = y % large_window;
-                auto local_x = x % large_window;
-
-                auto& patch = rbm_features[prev_patches + (patch_y * (padded_image.width / large_window) + patch_x)];
-
-                svm_features.emplace_back(large_features);
-
-                for(std::size_t i = 0; i < large_features; ++i){
-                    svm_features.back()[i] = patch[local_y * large_window + local_x + i];
-                }
-
-                svm_labels.push_back(is_text(labels[i_i], x, y) ? 1 : 0);
+                locations.emplace_back(i_i, x, y, prev_patches);
             }
         }
 
         prev_patches += padded_image.height / large_window * padded_image.width / large_window;
     }
 
-    cpp::parallel_shuffle(svm_features.begin(), svm_features.end(), svm_labels.begin(), svm_labels.end(), g);
+    std::shuffle(locations.begin(), locations.end(), g);
+
+    std::cout << locations.size() << " locations extracted" << std::endl;
+
+    //3. Get features for SVM
+
+    svm_features.reserve(limit);
+    svm_labels.reserve(limit);
 
     std::size_t count_0 = 0;
     std::size_t count_1 = 0;
 
-    SFeatures svm_features_tmp;
-    SLabels svm_labels_tmp;
+    for(auto& location : locations){
+        if(svm_features.size() == limit){
+            break;
+        }
 
-    for(std::size_t i_i = 0; i_i < svm_features.size() && svm_features_tmp.size() < limit; ++i_i){
-        auto& label = svm_labels[i_i];
+        auto i_i = std::get<0>(location);
+        auto x = std::get<1>(location);
+        auto y = std::get<2>(location);
+
+        auto& padded_image = padded_images[i_i];
+        auto label = is_text(labels[i_i], x, y) ? 1 : 0;
 
         if(label == 1 && (count_1 < 2 * count_0 || count_1 < 100)){
             ++count_1;
-            svm_features_tmp.push_back(svm_features[i_i]);
-            svm_labels_tmp.push_back(label);
         } else if(label == 0 && (count_0 < 2 * count_1 || count_0 < 100)){
             ++count_0;
-            svm_features_tmp.push_back(svm_features[i_i]);
-            svm_labels_tmp.push_back(label);
+        } else {
+            continue;
         }
+
+        //Indexes in padded images
+        auto global_y = y + large_first_border;
+        auto global_x = x + large_first_border;
+
+        //Index of the patch
+        auto patch_y = global_y / large_window;
+        auto patch_x = global_x / large_window;
+
+        //Index inside the patch
+        auto local_y = y % large_window;
+        auto local_x = x % large_window;
+
+        auto& patch = rbm_features[std::get<3>(location) + (patch_y * (padded_image.width / large_window) + patch_x)];
+
+        svm_features.emplace_back(large_features);
+
+        for(std::size_t i = 0; i < large_features; ++i){
+            svm_features.back()[i] = patch[local_y * large_window + local_x + i];
+        }
+
+        svm_labels.push_back(label);
     }
 
     std::cout << count_0 << std::endl;
     std::cout << count_1 << std::endl;
-
-    svm_features = std::move(svm_features_tmp);
-    svm_labels = std::move(svm_labels_tmp);
 
     svm_features.shrink_to_fit();
     svm_labels.shrink_to_fit();
@@ -343,7 +362,7 @@ void large_svm_extract(DBN& dbn, const Labels& labels, const Images& images, con
 int large_wise(){
     auto dataset = icdar::read_2013_dataset(
         "/home/wichtounet/datasets/icdar_2013_natural/train",
-        "/home/wichtounet/datasets/icdar_2013_natural/test", 20, 1);
+        "/home/wichtounet/datasets/icdar_2013_natural/test", 10, 1);
 
     if(dataset.training_labels.empty() || dataset.training_images.empty()){
         std::cout << "Problem while reading the dataset" << std::endl;
@@ -404,10 +423,10 @@ int large_wise(){
     dbn->layer<0>().pbias = 0.1;
     dbn->layer<0>().pbias_lambda = 100;
 
-    //dbn->load("icdar.dbn");
+    dbn->load("icdar.dbn");
 
-    dbn->pretrain(training_patches, 10);
-    dbn->store("icdar.dbn");
+    //dbn->pretrain(training_patches, 10);
+    //dbn->store("icdar.dbn");
 
     svm::model model;
 
@@ -424,10 +443,36 @@ int large_wise(){
             std::vector<std::vector<float>> features;
             std::vector<uint8_t> labels;
 
-            large_svm_extract(*dbn, dataset.training_labels, dataset.training_images, training_images_padded, training_patches, features, labels, 100000, g);
+            large_svm_extract(*dbn, dataset.training_labels, dataset.training_images,
+                training_images_padded, training_patches, features, labels, 250000, g);
 
             std::cout << features.size() << " training feature vectors extracted" << std::endl;
             std::cout << count_one(labels) / static_cast<double>(labels.size()) << "% text pixel" << std::endl;
+
+            std::cout << "Scale features" << std::endl;
+
+            //Scale each column
+
+            for(std::size_t i = 0; i < large_features; ++i){
+                float mean = 0.0;
+                for(auto& feature : features){
+                    mean += feature[i];
+                }
+                mean /= features.size();
+                for(auto& feature : features){
+                    feature[i] -= mean;
+                }
+                double stddev = 0.0;
+                for(auto& feature : features){
+                    stddev += feature[i] * feature[i];
+                }
+                stddev = std::sqrt(stddev / features.size());
+                for(auto& feature : features){
+                    feature[i] /= stddev;
+                }
+            }
+
+            std::cout << "Make SVM Problem" << std::endl;
 
             training_problem = svm::make_problem(labels, features);
         }
