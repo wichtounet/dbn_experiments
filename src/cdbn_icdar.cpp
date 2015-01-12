@@ -25,8 +25,8 @@
 constexpr const std::size_t deep_context = 5;
 constexpr const std::size_t deep_window = deep_context * 2 + 1;
 
-constexpr const std::size_t large_window = 135;
-constexpr const std::size_t large_first_border = 8;
+constexpr const std::size_t large_window = 40;
+constexpr const std::size_t large_filter = 8;
 constexpr const std::size_t large_features = 40;
 
 template<typename Label>
@@ -71,8 +71,8 @@ Images large_pad(Images& d_images){
     Images padded_images;
 
     for(auto& image : d_images){
-        auto width = image.width + 2 * large_first_border;
-        auto height = image.height + 2 * large_first_border;
+        auto width = image.width + 2 * large_filter;
+        auto height = image.height + 2 * large_filter;
 
         width = width % large_window > 0 ? (width / large_window + 1) * large_window : width;
         height = height % large_window > 0 ? (height / large_window + 1) * large_window : height;
@@ -85,8 +85,8 @@ Images large_pad(Images& d_images){
 
         for(std::size_t row = 0; row < image.height; ++row){
             for(std::size_t col = 0; col < image.width; ++col){
-                auto padded_row = row + large_first_border;
-                auto padded_col = col + large_first_border;
+                auto padded_row = row + large_filter;
+                auto padded_col = col + large_filter;
 
                 padded_images.back().pixels[padded_row * width + padded_col].r = image.pixels[row * image.width + col].r;
                 padded_images.back().pixels[padded_row * width + padded_col].g = image.pixels[row * image.width + col].g;
@@ -105,13 +105,15 @@ void large_extract(std::vector<std::vector<float>>& patches, const Images& d_ima
 
         for(std::size_t i = 0; i < image.height; i += large_window){
             for(std::size_t j = 0; j < image.width; j += large_window){
-                patches.emplace_back(large_window * large_window);
+                patches.emplace_back(large_window * large_window * 3);
 
                 for(std::size_t a = i; a < i + large_window; ++a){
                     for(std::size_t b = j; b < j + large_window; ++b){
                         auto w_i = a - i;
                         auto w_j = b - j;
                         patches.back().at(w_i * large_window + w_j) = image.pixels.at(a * image.width + b).r;
+                        patches.back().at(w_i * large_window + w_j + 1) = image.pixels.at(a * image.width + b).g;
+                        patches.back().at(w_i * large_window + w_j + 2) = image.pixels.at(a * image.width + b).b;
                     }
                 }
             }
@@ -319,17 +321,17 @@ void large_svm_extract(DBN& dbn, const Labels& labels, const Images& images, con
         auto& padded_image = padded_images[i_i];
         auto label = is_text(labels[i_i], x, y) ? 1 : 0;
 
-        if(label == 1 && (count_1 < 2 * count_0 || count_1 < 100)){
+        if(label == 1 && (count_1 < 1.1 * count_0 || count_1 < 100)){
             ++count_1;
-        } else if(label == 0 && (count_0 < 2 * count_1 || count_0 < 100)){
+        } else if(label == 0 && (count_0 < 1.1 * count_1 || count_0 < 100)){
             ++count_0;
         } else {
             continue;
         }
 
         //Indexes in padded images
-        auto global_y = y + large_first_border;
-        auto global_x = x + large_first_border;
+        auto global_y = y + large_filter;
+        auto global_x = x + large_filter;
 
         //Index of the patch
         auto patch_y = global_y / large_window;
@@ -350,19 +352,63 @@ void large_svm_extract(DBN& dbn, const Labels& labels, const Images& images, con
         svm_labels.push_back(label);
     }
 
-    std::cout << count_0 << std::endl;
-    std::cout << count_1 << std::endl;
-
     svm_features.shrink_to_fit();
     svm_labels.shrink_to_fit();
 
     std::cout << "... done" << std::endl;
 }
 
+void svm_scale(std::vector<std::vector<float>>& features){
+    std::cout << "Scale features" << std::endl;
+
+    //Scale each column
+
+    if(true){
+        //Version 1: Scale each feature in [0,1]
+
+        float a = 0.0;
+        float b = 1.0;
+
+        for(std::size_t i = 0; i < large_features; ++i){
+            float min = 0.0;
+            float max = 0.0;
+            for(auto& feature : features){
+                min = std::min(min, feature[i]);
+                max = std::max(max, feature[i]);
+            }
+
+            for(auto& feature : features){
+                feature[i] = a + ((b - a) * (feature[i] - min)) / (max - min);
+            }
+        }
+    } else {
+        //Version 1: Normalize each feature with zero-mean and unit variance
+
+        for(std::size_t i = 0; i < large_features; ++i){
+            float mean = 0.0;
+            for(auto& feature : features){
+                mean += feature[i];
+            }
+            mean /= features.size();
+            for(auto& feature : features){
+                feature[i] -= mean;
+            }
+            double stddev = 0.0;
+            for(auto& feature : features){
+                stddev += feature[i] * feature[i];
+            }
+            stddev = std::sqrt(stddev / features.size());
+            for(auto& feature : features){
+                feature[i] /= stddev;
+            }
+        }
+    }
+}
+
 int large_wise(){
     auto dataset = icdar::read_2013_dataset(
         "/home/wichtounet/datasets/icdar_2013_natural/train",
-        "/home/wichtounet/datasets/icdar_2013_natural/test", 10, 1);
+        "/home/wichtounet/datasets/icdar_2013_natural/test", 4, 2);
 
     if(dataset.training_labels.empty() || dataset.training_images.empty()){
         std::cout << "Problem while reading the dataset" << std::endl;
@@ -402,7 +448,7 @@ int large_wise(){
 
     typedef dll::conv_dbn_desc<
         dll::dbn_layers<
-            dll::conv_rbm_desc<large_window, 1, 128, large_features
+            dll::conv_rbm_desc<large_window, 3, large_filter, large_features
                 , dll::momentum
                 , dll::batch_size<8>
                 , dll::weight_decay<dll::decay_type::L2>
@@ -420,13 +466,13 @@ int large_wise(){
     std::cout << "DBN output is " << dbn->output_size() << std::endl;
 
     dbn->layer<0>().learning_rate /= 100;
-    dbn->layer<0>().pbias = 0.1;
-    dbn->layer<0>().pbias_lambda = 100;
+    //dbn->layer<0>().pbias = 0.01;
+    //dbn->layer<0>().pbias_lambda = 0.001;
 
-    dbn->load("icdar.dbn");
+    //dbn->load("icdar_3d.dbn");
 
-    //dbn->pretrain(training_patches, 10);
-    //dbn->store("icdar.dbn");
+    dbn->pretrain(training_patches, 20);
+    dbn->store("icdar_3d.dbn");
 
     svm::model model;
 
@@ -435,42 +481,22 @@ int large_wise(){
     //Make it quiet
     //svm::make_quiet();
 
+    svm::problem training_problem;
+
     //Train and test on training set
     {
-        svm::problem training_problem;
 
         {
             std::vector<std::vector<float>> features;
             std::vector<uint8_t> labels;
 
             large_svm_extract(*dbn, dataset.training_labels, dataset.training_images,
-                training_images_padded, training_patches, features, labels, 250000, g);
+                training_images_padded, training_patches, features, labels, 50000, g);
 
             std::cout << features.size() << " training feature vectors extracted" << std::endl;
             std::cout << count_one(labels) / static_cast<double>(labels.size()) << "% text pixel" << std::endl;
 
-            std::cout << "Scale features" << std::endl;
-
-            //Scale each column
-
-            for(std::size_t i = 0; i < large_features; ++i){
-                float mean = 0.0;
-                for(auto& feature : features){
-                    mean += feature[i];
-                }
-                mean /= features.size();
-                for(auto& feature : features){
-                    feature[i] -= mean;
-                }
-                double stddev = 0.0;
-                for(auto& feature : features){
-                    stddev += feature[i] * feature[i];
-                }
-                stddev = std::sqrt(stddev / features.size());
-                for(auto& feature : features){
-                    feature[i] /= stddev;
-                }
-            }
+            svm_scale(features);
 
             std::cout << "Make SVM Problem" << std::endl;
 
@@ -481,9 +507,10 @@ int large_wise(){
 
         mnist_parameters.svm_type = C_SVC;
         mnist_parameters.kernel_type = RBF;
-        mnist_parameters.probability = 1;
-        //mnist_parameters.C = 2.8;
-        //mnist_parameters.gamma = 0.0073;
+        mnist_parameters.probability = 0;
+        mnist_parameters.shrinking = 0;
+        mnist_parameters.C = 1;
+        mnist_parameters.gamma = 1.0 / 2.1;
 
         //Make sure parameters are not too messed up
         if(!svm::check(training_problem, mnist_parameters)){
@@ -498,9 +525,6 @@ int large_wise(){
         svm::test_model(training_problem, model);
     }
 
-    //Testing is too memory expensive for now
-    return 0;
-
     //Test on test set
     {
         svm::problem test_problem;
@@ -509,10 +533,12 @@ int large_wise(){
             std::vector<std::vector<float>> features;
             std::vector<uint8_t> labels;
 
-            large_svm_extract(*dbn, dataset.test_labels, dataset.test_images, test_images_padded, test_patches, features, labels, 25000, g);
+            large_svm_extract(*dbn, dataset.test_labels, dataset.test_images, test_images_padded, test_patches, features, labels, 50000, g);
 
             std::cout << features.size() << " test feature vectors extracted" << std::endl;
             std::cout << count_one(labels) / static_cast<double>(labels.size()) << "% text pixel" << std::endl;
+
+            svm_scale(features);
 
             test_problem = svm::make_problem(labels, features);
         }
