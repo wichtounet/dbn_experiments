@@ -54,11 +54,11 @@ std::size_t count_peaks(Iterator first, Iterator last){
     while(first != last){
         auto c = *first;
 
-        if(!current){
-            if(c > 0){
-                current = true;
-            }
-        } else if(c == 0){
+        if(!current && c > 0){
+            current = true;
+        }
+
+        if(current && c == 0){
             ++peaks;
             current = false;
         }
@@ -129,13 +129,13 @@ cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
 
 cv::Mat combine(const std::vector<cv::Mat>& binary_maps){
     cv::Mat binary_map_image(binary_maps[0].rows, binary_maps[0].cols, CV_8U);
-    binary_map_image = cv::Scalar(255);
+    binary_map_image = cv::Scalar(0);
 
     for(auto& binary_map : binary_maps){
         for(std::size_t x = 0; x < binary_map.cols; ++x){
             for(std::size_t y = 0; y < binary_map.rows; ++y){
-                if(binary_map.at<uchar>(cv::Point(x,y)) != 255){
-                    binary_map_image.at<uchar>(cv::Point(x,y)) = 0;
+                if(binary_map.at<uchar>(cv::Point(x,y)) == 255){
+                    binary_map_image.at<uchar>(cv::Point(x,y)) = 255;
                 }
             }
         }
@@ -145,7 +145,7 @@ cv::Mat combine(const std::vector<cv::Mat>& binary_maps){
 }
 
 int main(){
-    std::string path = "/home/wichtounet/datasets/icdar_2013_natural/train/100.jpg";
+    std::string path = "/home/wichtounet/datasets/icdar_2013_natural/train/119.jpg";
 
     auto image = open_image(path);
 
@@ -168,6 +168,9 @@ int main(){
         }
     }
 
+    cv::namedWindow("Source", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Source", image);
+
     cv::namedWindow("Dest", cv::WINDOW_AUTOSIZE);
     cv::imshow("Dest", dst_image);
 
@@ -183,15 +186,15 @@ cv::Mat open_image(const std::string& path){
         return source_image;
     }
 
-    //if(source_image.rows > 800 || source_image.cols > 800){
-        //auto factor = 800.0f / std::max(source_image.rows, source_image.cols);
+    if(source_image.rows > 800 || source_image.cols > 800){
+        auto factor = 800.0f / std::max(source_image.rows, source_image.cols);
 
-        //cv::Mat resized_image;
+        cv::Mat resized_image;
 
-        //cv::resize(source_image, resized_image, cv::Size(), factor, factor, cv::INTER_AREA);
+        cv::resize(source_image, resized_image, cv::Size(), factor, factor, cv::INTER_AREA);
 
-        //return resized_image;
-    //}
+        return resized_image;
+    }
 
     return source_image;
 }
