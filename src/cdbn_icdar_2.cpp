@@ -282,7 +282,7 @@ void process_image(const std::string& source_path, bool display = false){
 
     auto binary_map_image = combine(binary_maps);
 
-    auto structure_elem = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(9, 9));
+    auto structure_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(15, 15));
     cv::morphologyEx(binary_map_image, binary_map_image, cv::MORPH_OPEN, structure_elem);
     cv::morphologyEx(binary_map_image, binary_map_image, cv::MORPH_CLOSE, structure_elem);
 
