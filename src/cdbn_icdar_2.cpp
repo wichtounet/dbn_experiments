@@ -176,53 +176,48 @@ std::size_t count_gray_peaks(cv::Mat& image){
     return count_gray_peaks(intensities.begin(), intensities.end());
 }
 
-cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
+void quantize_image(cv::Mat& image, cv::Mat& quant_image){
+    std::size_t width = image.cols;
+    std::size_t height = image.rows;
+
+    for(std::size_t x = 0; x < width; ++x){
+        for(std::size_t y = 0; y < height; ++y){
+            uchar c1 = (image.at<cv::Vec3b>(cv::Point(x, y))[0] & 192) >> 2;
+            uchar c2 = (image.at<cv::Vec3b>(cv::Point(x, y))[1] & 192) >> 4;
+            uchar c3 = (image.at<cv::Vec3b>(cv::Point(x, y))[2] & 192) >> 6;
+
+            quant_image.at<uchar>(cv::Point(x, y)) = c1 | c2 | c3;
+        }
+    }
+}
+
+cv::Mat binarize(cv::Mat& source_image){
     auto image = source_image.clone();
 
     std::size_t width = image.cols;
     std::size_t height = image.rows;
 
-    cv::Mat gray_image;
-    cv::cvtColor(source_image, gray_image, CV_RGB2GRAY);
-
-    cv::equalizeHist(gray_image, gray_image);
-
-    //cv::namedWindow("Gray", cv::WINDOW_AUTOSIZE);
-    //cv::imshow("Gray", gray_image);
-
     cv::Mat binary_map_image(image.rows, image.cols, CV_8U);
     binary_map_image = cv::Scalar(0);
 
+    cv::Mat quant_image(image.rows, image.cols, CV_8U);
+    quant_image = cv::Scalar(0);
+
+    quantize_image(image, quant_image);
+
     std::vector<std::size_t> intensity_map(image.cols * image.rows, 0);
 
-    reduce_image(image, mul);
-    //reduce_image(gray_image, mul);
-
-    //cv::namedWindow(std::to_string(mul) + "_reduced", cv::WINDOW_AUTOSIZE);
-    //cv::imshow(std::to_string(mul) + "_reduced", image);
-
-    //cv::namedWindow("Reduced Gray", cv::WINDOW_AUTOSIZE);
-    //cv::imshow("Reduced Gray", gray_image);
+    cv::namedWindow("Quantized", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Quantized", quant_image);
 
     for(std::size_t x = 0; x * step_size + window < width; ++x){
         for(std::size_t y = 0; y * step_size + window < height; ++y){
             cv::Rect rect(x*step_size, y*step_size, window,window);
-            cv::Mat roi(image, rect);
-            cv::Mat gray_roi(gray_image, rect);
+            cv::Mat roi(quant_image, rect);
 
-            auto r_peaks = count_peaks(roi, 0);
-            auto g_peaks = count_peaks(roi, 1);
-            auto b_peaks = count_peaks(roi, 2);
-            auto gray_peaks = count_gray_peaks(gray_roi);
+            auto peaks = count_peaks(roi, 0);
 
-            //auto value = gray_peaks > 1 && gray_peaks < max_peaks - 2 ? 1 : 0;
-
-            std::size_t value =
-                    (r_peaks > min_peaks && r_peaks < max_peaks ? 1 : 0)
-                +   (g_peaks > min_peaks && g_peaks < max_peaks ? 1 : 0)
-                +   (b_peaks > min_peaks && b_peaks < max_peaks ? 1 : 0)
-                //+   (gray_peaks > 1 && gray_peaks < max_peaks ? 1 : 0)
-                    ;
+            std::size_t value = peaks > min_peaks && peaks < max_peaks ? 3 : 0;
 
             if(value > 0){
                 for(std::size_t xx = 0; xx < window; ++xx){
@@ -280,11 +275,7 @@ void process_image(const std::string& source_path, bool display = false){
     auto image = open_image(source_path);
 
     std::vector<cv::Mat> binary_maps;
-
-    //binary_maps.push_back(binarize(image, 2));
-    binary_maps.push_back(binarize(image, 32));
-    binary_maps.push_back(binarize(image, 48));
-    binary_maps.push_back(binarize(image, 64));
+    binary_maps.push_back(binarize(image));
 
     auto binary_map_image = combine(binary_maps);
 
