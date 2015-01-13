@@ -37,8 +37,8 @@ constexpr uint8_t reduce_val(uint8_t val, uint8_t mul){
 }
 
 void reduce_image(cv::Mat& image, uint8_t mul){
-    for(std::size_t x = 0; x < image.cols; ++x){
-        for(std::size_t y = 0; y < image.rows; ++y){
+    for(std::size_t x = 0; x < static_cast<std::size_t>(image.cols); ++x){
+        for(std::size_t y = 0; y < static_cast<std::size_t>(image.rows); ++y){
             image.at<cv::Vec3b>(cv::Point(x,y))[0] = reduce_val(image.at<cv::Vec3b>(cv::Point(x,y))[0], mul);
             image.at<cv::Vec3b>(cv::Point(x,y))[1] = reduce_val(image.at<cv::Vec3b>(cv::Point(x,y))[1], mul);
             image.at<cv::Vec3b>(cv::Point(x,y))[2] = reduce_val(image.at<cv::Vec3b>(cv::Point(x,y))[2], mul);
@@ -78,17 +78,17 @@ std::size_t count_peaks(cv::Mat& image, std::size_t channel){
         ++intensities[(*it)[channel]];
     }
 
-    static std::size_t zzz = 0;
+    //static std::size_t zzz = 0;
 
-    if(zzz == 666/* || count_gray_peaks(intensities.begin(), intensities.end()) > 1*/){
-        for(std::size_t c = 0; c < 256; ++c){
-            std::cout << c << ":" << static_cast<std::size_t>(intensities[c]) << std::endl;
-        }
+    //if(zzz == 666[> || count_gray_peaks(intensities.begin(), intensities.end()) > 1<]){
+        //for(std::size_t c = 0; c < 256; ++c){
+            //std::cout << c << ":" << static_cast<std::size_t>(intensities[c]) << std::endl;
+        //}
 
-        std::cout << "peaks => " << count_peaks(intensities.begin(), intensities.end()) << std::endl;
-    }
+        //std::cout << "peaks => " << count_peaks(intensities.begin(), intensities.end()) << std::endl;
+    //}
 
-    ++zzz;
+    //++zzz;
 
     return count_peaks(intensities.begin(), intensities.end());
 }
@@ -255,12 +255,15 @@ cv::Mat combine(const std::vector<cv::Mat>& binary_maps){
         return binary_maps[0];
     }
 
-    cv::Mat binary_map_image(binary_maps[0].rows, binary_maps[0].cols, CV_8U);
+    std::size_t width = binary_maps[0].cols;
+    std::size_t height = binary_maps[0].rows;
+
+    cv::Mat binary_map_image(height, width, CV_8U);
     binary_map_image = cv::Scalar(0);
 
     for(auto& binary_map : binary_maps){
-        for(std::size_t x = 0; x < binary_map.cols; ++x){
-            for(std::size_t y = 0; y < binary_map.rows; ++y){
+        for(std::size_t x = 0; x < width; ++x){
+            for(std::size_t y = 0; y < height; ++y){
                 if(binary_map.at<uchar>(cv::Point(x,y)) == 255){
                     binary_map_image.at<uchar>(cv::Point(x,y)) = 255;
                 }
@@ -284,8 +287,8 @@ void process_image(const std::string& source_path, bool display = false){
     cv::morphologyEx(binary_map_image, binary_map_image, cv::MORPH_CLOSE, structure_elem);
 
     auto dst_image = image.clone();
-    for(std::size_t x = 0; x < image.cols; ++x){
-        for(std::size_t y = 0; y < image.rows; ++y){
+    for(std::size_t x = 0; x < static_cast<std::size_t>(image.cols); ++x){
+        for(std::size_t y = 0; y < static_cast<std::size_t>(image.rows); ++y){
             if(binary_map_image.at<uchar>(cv::Point(x,y)) != 255){
                 dst_image.at<cv::Vec3b>(cv::Point(x,y))[0] = 0;
                 dst_image.at<cv::Vec3b>(cv::Point(x,y))[1] = 0;
