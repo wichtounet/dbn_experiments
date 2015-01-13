@@ -33,14 +33,7 @@ static constexpr const std::size_t binary_threshold = 35;
 cv::Mat open_image(const std::string& path);
 
 constexpr uint8_t reduce_val(uint8_t val, uint8_t mul){
-    //return val;
-    //return (val / mul) * mul;
     return val / mul * mul + mul / 2;
-    //if (val < 192) return uchar(val / 64.0 + 0.5) * 64;
-    //return 255;
-    //if (val < 64) return 0;
-    //if (val < 128) return 64;
-    //return 255;
 }
 
 void reduce_image(cv::Mat& image, uint8_t mul){
@@ -73,6 +66,7 @@ std::size_t count_peaks(Iterator first, Iterator last){
         ++first;
     }
 
+
     return peaks;
 }
 
@@ -84,7 +78,79 @@ std::size_t count_peaks(cv::Mat& image, std::size_t channel){
         ++intensities[(*it)[channel]];
     }
 
+    static std::size_t zzz = 0;
+
+    if(zzz == 666/* || count_gray_peaks(intensities.begin(), intensities.end()) > 1*/){
+        for(std::size_t c = 0; c < 256; ++c){
+            std::cout << c << ":" << static_cast<std::size_t>(intensities[c]) << std::endl;
+        }
+
+        std::cout << "peaks => " << count_peaks(intensities.begin(), intensities.end()) << std::endl;
+    }
+
+    ++zzz;
+
     return count_peaks(intensities.begin(), intensities.end());
+}
+
+template<typename Iterator>
+std::size_t count_gray_peaks(Iterator first, Iterator last){
+    std::size_t peaks = 0;
+
+    bool current = false;
+    bool up = false;
+    std::size_t distance = 0;
+    std::size_t prev = 0;
+    std::size_t intensity = 0;
+
+    while(first != last){
+        auto c = *first;
+
+        if(current){
+
+            if(c < 1){
+                ++distance;
+
+                if(distance > 5){
+                    current = false;
+
+                    if(intensity > 25){
+                        ++peaks;
+                    }
+                }
+            } else {
+                distance = 0;
+                prev = c;
+                if(c > intensity){
+                    intensity = c;
+                }
+            }
+
+
+        } else {
+
+
+            if(c > 1){
+                current = true;
+                up = true;
+                prev = c;
+                distance = 0;
+                intensity = c;
+            }
+
+
+
+        }
+
+        ++first;
+    }
+
+    if(current && distance <= 5 && intensity > 25){
+        ++peaks;
+    }
+
+
+    return peaks;
 }
 
 std::size_t count_gray_peaks(cv::Mat& image){
@@ -95,14 +161,31 @@ std::size_t count_gray_peaks(cv::Mat& image){
         ++intensities[(*it)];
     }
 
-    return count_peaks(intensities.begin(), intensities.end());
+    //static std::size_t zzz = 0;
+
+    //if(zzz == 3333 || count_gray_peaks(intensities.begin(), intensities.end()) > 1){
+        //for(std::size_t c = 0; c < 256; ++c){
+            //std::cout << c << ":" << static_cast<std::size_t>(intensities[c]) << std::endl;
+        //}
+
+        //std::cout << "peaks => " << count_gray_peaks(intensities.begin(), intensities.end()) << std::endl;
+    //}
+
+    //++zzz;
+
+    return count_gray_peaks(intensities.begin(), intensities.end());
 }
 
 cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
     auto image = source_image.clone();
 
+    std::size_t width = image.cols;
+    std::size_t height = image.rows;
+
     cv::Mat gray_image;
     cv::cvtColor(source_image, gray_image, CV_RGB2GRAY);
+
+    cv::equalizeHist(gray_image, gray_image);
 
     //cv::namedWindow("Gray", cv::WINDOW_AUTOSIZE);
     //cv::imshow("Gray", gray_image);
@@ -115,14 +198,14 @@ cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
     reduce_image(image, mul);
     //reduce_image(gray_image, mul);
 
-    //cv::namedWindow("Reduced", cv::WINDOW_AUTOSIZE);
-    //cv::imshow("Reduced", image);
+    //cv::namedWindow(std::to_string(mul) + "_reduced", cv::WINDOW_AUTOSIZE);
+    //cv::imshow(std::to_string(mul) + "_reduced", image);
 
     //cv::namedWindow("Reduced Gray", cv::WINDOW_AUTOSIZE);
     //cv::imshow("Reduced Gray", gray_image);
 
-    for(std::size_t x = 0; x * step_size + window < image.cols; ++x){
-        for(std::size_t y = 0; y * step_size + window < image.rows; ++y){
+    for(std::size_t x = 0; x * step_size + window < width; ++x){
+        for(std::size_t y = 0; y * step_size + window < height; ++y){
             cv::Rect rect(x*step_size, y*step_size, window,window);
             cv::Mat roi(image, rect);
             cv::Mat gray_roi(gray_image, rect);
@@ -132,27 +215,29 @@ cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
             auto b_peaks = count_peaks(roi, 2);
             auto gray_peaks = count_gray_peaks(gray_roi);
 
-            //auto value = gray_peaks > 1 [>&& gray_peaks < max_peaks <] ? 1 : 0;
+            //auto value = gray_peaks > 1 && gray_peaks < max_peaks - 2 ? 1 : 0;
 
             std::size_t value =
                     (r_peaks > min_peaks && r_peaks < max_peaks ? 1 : 0)
                 +   (g_peaks > min_peaks && g_peaks < max_peaks ? 1 : 0)
-                +   (b_peaks > min_peaks && b_peaks < max_peaks ? 1 : 0);
+                +   (b_peaks > min_peaks && b_peaks < max_peaks ? 1 : 0)
+                //+   (gray_peaks > 1 && gray_peaks < max_peaks ? 1 : 0)
+                    ;
 
             if(value > 0){
                 for(std::size_t xx = 0; xx < window; ++xx){
                     for(std::size_t yy = 0; yy < window; ++yy){
-                        intensity_map[(xx + x * step_size) * image.rows + yy + y * step_size] += value;
+                        intensity_map[(xx + x * step_size) * height + yy + y * step_size] += value;
                     }
                 }
             }
         }
     }
 
-    for(std::size_t x = 0; x < image.cols; ++x){
-        for(std::size_t y = 0; y < image.rows; ++y){
+    for(std::size_t x = 0; x < width; ++x){
+        for(std::size_t y = 0; y < height; ++y){
             if(x > image.cols - window){
-                if(intensity_map[x * image.rows + y] < (binary_threshold - 5 * (image.cols - x))){
+                if(intensity_map[x * height + y] < (binary_threshold - 5 * (width - x))){
                     binary_map_image.at<uchar>(cv::Point(x,y)) = 0;
                 } else {
                     binary_map_image.at<uchar>(cv::Point(x,y)) = 255;
@@ -196,6 +281,7 @@ void process_image(const std::string& source_path, bool display = false){
 
     std::vector<cv::Mat> binary_maps;
 
+    //binary_maps.push_back(binarize(image, 2));
     binary_maps.push_back(binarize(image, 32));
     binary_maps.push_back(binarize(image, 48));
     binary_maps.push_back(binarize(image, 64));
