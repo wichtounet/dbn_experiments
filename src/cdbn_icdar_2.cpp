@@ -22,18 +22,25 @@
 
 #include <opencv2/opencv.hpp>
 
-static constexpr const std::size_t window = 32;
+static constexpr const std::size_t window = 16;
 static constexpr const std::size_t step_size = 4;
 
 static constexpr const std::size_t min_peaks = 2;
 static constexpr const std::size_t max_peaks = 8;
 
-static constexpr const std::size_t binary_threshold = 160;
+static constexpr const std::size_t binary_threshold = 35;
 
 cv::Mat open_image(const std::string& path);
 
 constexpr uint8_t reduce_val(uint8_t val, uint8_t mul){
-    return (val / mul) * mul;
+    //return val;
+    //return (val / mul) * mul;
+    return val / mul * mul + mul / 2;
+    //if (val < 192) return uchar(val / 64.0 + 0.5) * 64;
+    //return 255;
+    //if (val < 64) return 0;
+    //if (val < 128) return 64;
+    //return 255;
 }
 
 void reduce_image(cv::Mat& image, uint8_t mul){
@@ -80,8 +87,25 @@ std::size_t count_peaks(cv::Mat& image, std::size_t channel){
     return count_peaks(intensities.begin(), intensities.end());
 }
 
+std::size_t count_gray_peaks(cv::Mat& image){
+    std::array<uint8_t, 256> intensities;
+    std::fill(intensities.begin(), intensities.end(), 0);
+
+    for(auto it = image.begin<uchar>(), end = image.end<uchar>(); it != end; ++it){
+        ++intensities[(*it)];
+    }
+
+    return count_peaks(intensities.begin(), intensities.end());
+}
+
 cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
     auto image = source_image.clone();
+
+    cv::Mat gray_image;
+    cv::cvtColor(source_image, gray_image, CV_RGB2GRAY);
+
+    //cv::namedWindow("Gray", cv::WINDOW_AUTOSIZE);
+    //cv::imshow("Gray", gray_image);
 
     cv::Mat binary_map_image(image.rows, image.cols, CV_8U);
     binary_map_image = cv::Scalar(0);
@@ -89,20 +113,31 @@ cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
     std::vector<std::size_t> intensity_map(image.cols * image.rows, 0);
 
     reduce_image(image, mul);
+    //reduce_image(gray_image, mul);
+
+    //cv::namedWindow("Reduced", cv::WINDOW_AUTOSIZE);
+    //cv::imshow("Reduced", image);
+
+    //cv::namedWindow("Reduced Gray", cv::WINDOW_AUTOSIZE);
+    //cv::imshow("Reduced Gray", gray_image);
 
     for(std::size_t x = 0; x * step_size + window < image.cols; ++x){
         for(std::size_t y = 0; y * step_size + window < image.rows; ++y){
             cv::Rect rect(x*step_size, y*step_size, window,window);
             cv::Mat roi(image, rect);
+            cv::Mat gray_roi(gray_image, rect);
 
             auto r_peaks = count_peaks(roi, 0);
             auto g_peaks = count_peaks(roi, 1);
             auto b_peaks = count_peaks(roi, 2);
+            auto gray_peaks = count_gray_peaks(gray_roi);
+
+            //auto value = gray_peaks > 1 [>&& gray_peaks < max_peaks <] ? 1 : 0;
 
             std::size_t value =
-                    (r_peaks > min_peaks ? 1 && r_peaks < max_peaks : 0)
-                +   (g_peaks > min_peaks ? 1 && g_peaks < max_peaks : 0)
-                +   (b_peaks > min_peaks ? 1 && b_peaks < max_peaks : 0);
+                    (r_peaks > min_peaks && r_peaks < max_peaks ? 1 : 0)
+                +   (g_peaks > min_peaks && g_peaks < max_peaks ? 1 : 0)
+                +   (b_peaks > min_peaks && b_peaks < max_peaks ? 1 : 0);
 
             if(value > 0){
                 for(std::size_t xx = 0; xx < window; ++xx){
@@ -116,10 +151,18 @@ cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
 
     for(std::size_t x = 0; x < image.cols; ++x){
         for(std::size_t y = 0; y < image.rows; ++y){
-            if(intensity_map[x * image.rows + y] < binary_threshold){
-                binary_map_image.at<uchar>(cv::Point(x,y)) = 0;
+            if(x > image.cols - window){
+                if(intensity_map[x * image.rows + y] < (binary_threshold - 5 * (image.cols - x))){
+                    binary_map_image.at<uchar>(cv::Point(x,y)) = 0;
+                } else {
+                    binary_map_image.at<uchar>(cv::Point(x,y)) = 255;
+                }
             } else {
-                binary_map_image.at<uchar>(cv::Point(x,y)) = 255;
+                if(intensity_map[x * image.rows + y] < binary_threshold){
+                    binary_map_image.at<uchar>(cv::Point(x,y)) = 0;
+                } else {
+                    binary_map_image.at<uchar>(cv::Point(x,y)) = 255;
+                }
             }
         }
     }
@@ -128,6 +171,10 @@ cv::Mat binarize(cv::Mat& source_image, uint8_t mul){
 }
 
 cv::Mat combine(const std::vector<cv::Mat>& binary_maps){
+    if(binary_maps.size() == 1){
+        return binary_maps[0];
+    }
+
     cv::Mat binary_map_image(binary_maps[0].rows, binary_maps[0].cols, CV_8U);
     binary_map_image = cv::Scalar(0);
 
@@ -144,10 +191,8 @@ cv::Mat combine(const std::vector<cv::Mat>& binary_maps){
     return binary_map_image;
 }
 
-int main(){
-    std::string path = "/home/wichtounet/datasets/icdar_2013_natural/train/119.jpg";
-
-    auto image = open_image(path);
+void process_image(const std::string& source_path, bool display = false){
+    auto image = open_image(source_path);
 
     std::vector<cv::Mat> binary_maps;
 
@@ -156,6 +201,10 @@ int main(){
     binary_maps.push_back(binarize(image, 64));
 
     auto binary_map_image = combine(binary_maps);
+
+    auto structure_elem = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(9, 9));
+    cv::morphologyEx(binary_map_image, binary_map_image, cv::MORPH_OPEN, structure_elem);
+    cv::morphologyEx(binary_map_image, binary_map_image, cv::MORPH_CLOSE, structure_elem);
 
     auto dst_image = image.clone();
     for(std::size_t x = 0; x < image.cols; ++x){
@@ -168,13 +217,36 @@ int main(){
         }
     }
 
-    cv::namedWindow("Source", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Source", image);
+    auto dest_path = source_path;
+    dest_path.insert(dest_path.rfind('.'), ".map");
+    imwrite(dest_path.c_str(), dst_image);
 
-    cv::namedWindow("Dest", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Dest", dst_image);
+    if(display){
+        cv::namedWindow("Source", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Source", image);
 
-    cv::waitKey(0);
+        cv::namedWindow("Dest", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Dest", dst_image);
+
+        cv::namedWindow("Map", cv::WINDOW_AUTOSIZE);
+        cv::imshow("Map", binary_map_image);
+
+        cv::waitKey(0);
+    }
+}
+
+int main(int argc, char* argv[]){
+    if(argc > 1){
+        std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/";
+        source_path += argv[1];
+        source_path += ".jpg";
+        process_image(source_path, true);
+    } else {
+        for(std::size_t i = 100; i <= 328; ++i){
+            std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/" + std::to_string(i) + ".jpg";
+            process_image(source_path);
+        }
+    }
 
     return 0;
 }
@@ -186,8 +258,8 @@ cv::Mat open_image(const std::string& path){
         return source_image;
     }
 
-    if(source_image.rows > 800 || source_image.cols > 800){
-        auto factor = 800.0f / std::max(source_image.rows, source_image.cols);
+    if(source_image.rows > 1000 || source_image.cols > 1000){
+        auto factor = 1000.0f / std::max(source_image.rows, source_image.cols);
 
         cv::Mat resized_image;
 
