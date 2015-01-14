@@ -207,9 +207,6 @@ cv::Mat binarize(cv::Mat& source_image){
 
     std::vector<std::size_t> intensity_map(image.cols * image.rows, 0);
 
-    cv::namedWindow("Quantized", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Quantized", quant_image);
-
     for(std::size_t x = 0; x * step_size + window < width; ++x){
         for(std::size_t y = 0; y * step_size + window < height; ++y){
             cv::Rect rect(x*step_size, y*step_size, window,window);
@@ -337,7 +334,19 @@ int main(int argc, char* argv[]){
         std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/";
         source_path += argv[1];
         source_path += ".jpg";
-        process_image(source_path, false, true);
+
+        if(argc > 2){
+            std::string arg(argv[2]);
+            if(arg == "bw"){
+                process_image(source_path, true, true);
+            } else if(arg == "contours" || arg == "ct"){
+                process_image(source_path, false, true);
+            } else {
+                printf("Unknown mode \"%s\"\n", arg.c_str());
+            }
+        } else {
+            process_image(source_path, false, true);
+        }
     } else {
         for(std::size_t i = 100; i <= 328; ++i){
             std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/" + std::to_string(i) + ".jpg";
