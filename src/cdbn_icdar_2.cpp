@@ -383,6 +383,7 @@ void process_image(const std::string& source_path, bool bw = true, bool display 
 }
 
 int main(int argc, char* argv[]){
+    bool test = true;
     if(argc > 1){
         std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/";
         source_path += argv[1];
@@ -401,8 +402,22 @@ int main(int argc, char* argv[]){
             process_image(source_path, false, true);
         }
     } else {
-        for(std::size_t i = 100; i <= 328; ++i){
-            std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/" + std::to_string(i) + ".jpg";
+        std::string prefix;
+        std::size_t min = 0;
+        std::size_t max = 0;
+
+        if(test){
+            prefix = "/home/wichtounet/datasets/icdar_2013_natural_wip/test/img_";
+            min = 1;
+            max = 233;
+        } else {
+            prefix = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/";
+            min = 100;
+            max = 328;
+        }
+
+        for(std::size_t i = min; i <= max; ++i){
+            std::string source_path = prefix + std::to_string(i) + ".jpg";
             process_image(source_path, true);
             process_image(source_path, false);
         }
