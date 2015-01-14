@@ -272,6 +272,7 @@ cv::Mat combine(const std::vector<cv::Mat>& binary_maps){
 }
 
 void process_image(const std::string& source_path, bool bw = true, bool display = false){
+    std::cout << "Process image " << source_path << std::endl;
     auto image = open_image(source_path);
     auto dst_image = image.clone();
 
@@ -294,6 +295,30 @@ void process_image(const std::string& source_path, bool bw = true, bool display 
                 }
             }
         }
+
+        cv::Mat lines_image;
+        constexpr const size_t CANNY_THRESHOLD = 60;
+        cv::Canny(binary_map_image, lines_image, CANNY_THRESHOLD, CANNY_THRESHOLD * 3, 5);
+
+        std::vector<cv::Vec4i> lines;
+        cv::HoughLinesP(lines_image, lines, 1, CV_PI/180, 32, 10, 5);
+
+        //Enlarge a bit the lines
+        for(auto& l : lines){
+            cv::Vec2f u(l[2] - l[0], l[3] - l[1]);
+            u *= 0.02;
+
+            l[2] += u[0];
+            l[3] += u[1];
+
+            l[0] -= u[0];
+            l[1] -= u[1];
+        }
+
+        for(auto& l : lines){
+            cv::line(dst_image, cv::Point2f(l[0], l[1]), cv::Point2f(l[2], l[3]), cv::Scalar(0, 255, 255), 2, CV_AA);
+        }
+
     } else {
         cv::Mat canny_image;
         std::vector<std::vector<cv::Point>> contours;
@@ -305,14 +330,42 @@ void process_image(const std::string& source_path, bool bw = true, bool display 
 
         cv::RNG rng(12345);
 
-        for( int i = 0; i< contours.size(); i++ ){
+        std::size_t c = 0;
+
+        for(int i = 0; i< contours.size(); i++){
+            //Ignore the global contour
+            if(hierarchy[i][3] < 0){
+                continue;
+            }
+
+            auto rect_roi = cv::boundingRect(contours[i]);
+            cv::Mat roi(binary_map_image, rect_roi);
+
+            auto mean_color = cv::mean(roi)[0];
+
+            //This is mostly black
+            if(mean_color < 100){
+                continue;
+            }
+
+            auto area = cv::contourArea(contours[i]);
+            std::cout << "contour " << i << " area = " << area << std::endl;
+            std::cout << "contour " << i << " rect area = " << rect_roi.area() << std::endl;
+            std::cout << "contour " << i << " area ratio = " << static_cast<double>(area) / rect_roi.area() << std::endl;
+
             cv::Scalar color(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-            cv::drawContours(dst_image, contours, i, color, 2, 8, hierarchy, 0, cv::Point() );
+            //cv::drawContours(dst_image, contours, i, color, 2, 8, hierarchy, 0, cv::Point() );
+
+            cv::rectangle(dst_image, rect_roi, color, 2, 8, 0);
+
+            ++c;
         }
+
+        std::cout << "   " << c << " contours found" << std::endl;
     }
 
     auto dest_path = source_path;
-    dest_path.insert(dest_path.rfind('.'), bw ? ".map" : ".contours");
+    dest_path.insert(dest_path.rfind('.'), bw ? ".zzz.map" : ".zzz.contours");
     imwrite(dest_path.c_str(), dst_image);
 
     if(display){
