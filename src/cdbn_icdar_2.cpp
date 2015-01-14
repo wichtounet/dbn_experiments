@@ -274,8 +274,9 @@ cv::Mat combine(const std::vector<cv::Mat>& binary_maps){
     return binary_map_image;
 }
 
-void process_image(const std::string& source_path, bool display = false){
+void process_image(const std::string& source_path, bool bw = true, bool display = false){
     auto image = open_image(source_path);
+    auto dst_image = image.clone();
 
     std::vector<cv::Mat> binary_maps;
     binary_maps.push_back(binarize(image));
@@ -286,19 +287,35 @@ void process_image(const std::string& source_path, bool display = false){
     cv::morphologyEx(binary_map_image, binary_map_image, cv::MORPH_OPEN, structure_elem);
     cv::morphologyEx(binary_map_image, binary_map_image, cv::MORPH_CLOSE, structure_elem);
 
-    auto dst_image = image.clone();
-    for(std::size_t x = 0; x < static_cast<std::size_t>(image.cols); ++x){
-        for(std::size_t y = 0; y < static_cast<std::size_t>(image.rows); ++y){
-            if(binary_map_image.at<uchar>(cv::Point(x,y)) != 255){
-                dst_image.at<cv::Vec3b>(cv::Point(x,y))[0] = 0;
-                dst_image.at<cv::Vec3b>(cv::Point(x,y))[1] = 0;
-                dst_image.at<cv::Vec3b>(cv::Point(x,y))[2] = 0;
+    if(bw){
+        for(std::size_t x = 0; x < static_cast<std::size_t>(image.cols); ++x){
+            for(std::size_t y = 0; y < static_cast<std::size_t>(image.rows); ++y){
+                if(binary_map_image.at<uchar>(cv::Point(x,y)) != 255){
+                    dst_image.at<cv::Vec3b>(cv::Point(x,y))[0] = 0;
+                    dst_image.at<cv::Vec3b>(cv::Point(x,y))[1] = 0;
+                    dst_image.at<cv::Vec3b>(cv::Point(x,y))[2] = 0;
+                }
             }
+        }
+    } else {
+        cv::Mat canny_image;
+        std::vector<std::vector<cv::Point>> contours;
+        std::vector<cv::Vec4i> hierarchy;
+
+        cv::Canny(binary_map_image, canny_image, 100, 100*2, 3);
+
+        cv::findContours(canny_image, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
+        cv::RNG rng(12345);
+
+        for( int i = 0; i< contours.size(); i++ ){
+            cv::Scalar color(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+            cv::drawContours(dst_image, contours, i, color, 2, 8, hierarchy, 0, cv::Point() );
         }
     }
 
     auto dest_path = source_path;
-    dest_path.insert(dest_path.rfind('.'), ".map");
+    dest_path.insert(dest_path.rfind('.'), bw ? ".map" : ".contours");
     imwrite(dest_path.c_str(), dst_image);
 
     if(display){
@@ -320,11 +337,12 @@ int main(int argc, char* argv[]){
         std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/";
         source_path += argv[1];
         source_path += ".jpg";
-        process_image(source_path, true);
+        process_image(source_path, false, true);
     } else {
         for(std::size_t i = 100; i <= 328; ++i){
             std::string source_path = "/home/wichtounet/datasets/icdar_2013_natural_wip/train/" + std::to_string(i) + ".jpg";
-            process_image(source_path);
+            process_image(source_path, true);
+            process_image(source_path, false);
         }
     }
 
