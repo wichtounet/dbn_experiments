@@ -26,10 +26,6 @@ debug: debug/bin/rbm_mnist debug/bin/crbm_mnist_view debug/bin/dbn_mnist debug/b
 
 all: release debug
 
-sonar: release
-	cppcheck --xml-version=2 --enable=all --std=c++11 src 2> cppcheck_report.xml
-	/opt/sonar-runner/bin/sonar-runner
-
 clean: base_clean
 
 include make-utils/cpp-utils-finalize.mk
