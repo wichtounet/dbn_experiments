@@ -1,4 +1,5 @@
 release/
+release_debug/
 debug/
 reports
 perf.data
