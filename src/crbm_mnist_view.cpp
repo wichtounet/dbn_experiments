@@ -38,15 +38,15 @@ int main(int argc, char* argv[]){
     mnist::binarize_dataset(dataset);
 
     if(!mp){
-        dll::conv_rbm_desc<
-            28, 1, 12, 40,
+        dll::conv_rbm_desc_square<
+            1, 28, 40, 12,
             dll::momentum,
             dll::weight_decay<dll::decay_type::L2>,
             dll::sparsity<dll::sparsity_method::LEE>,
             //dll::trainer<dll::pcd1_trainer_t>,
             dll::batch_size<50>,
             //dll::visible<dll::unit_type::GAUSSIAN>,
-            dll::watcher<visu>>::rbm_t rbm;
+            dll::watcher<visu>>::layer_t rbm;
 
         rbm.pbias_lambda = 100;
 
@@ -57,15 +57,15 @@ int main(int argc, char* argv[]){
 
         rbm.train(dataset.training_images, 500, dll::init_watcher);
     } else {
-        dll::conv_rbm_mp_desc<
-            28, 1, 12, 40, 2,
+        dll::conv_rbm_mp_desc_square<
+            1, 28, 40, 12, 2,
             dll::momentum,
             dll::weight_decay<dll::decay_type::L2>,
             dll::sparsity<dll::sparsity_method::LEE>,
             //dll::trainer<dll::pcd1_trainer_t>,
             dll::batch_size<25>,
             //dll::visible<dll::unit_type::GAUSSIAN>,
-            dll::watcher<visu>>::rbm_t rbm;
+            dll::watcher<visu>>::layer_t rbm;
 
         rbm.pbias_lambda = 1000;
 

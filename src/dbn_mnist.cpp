@@ -146,7 +146,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, etl::dyn_vector, double>(100);
+    auto dataset = mnist::read_dataset_direct<std::vector, etl::dyn_vector<float>>(100);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -159,9 +159,9 @@ int main(int argc, char* argv[]){
         if(simple){
             typedef dll::dbn_desc<
                 dll::dbn_label_layers<
-                dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-                dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-                dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t
+                dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::layer_t,
+                dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::layer_t,
+                dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::layer_t
                     >>::dbn_t dbn_simple_t;
 
             auto dbn = std::make_shared<dbn_simple_t>();
@@ -172,9 +172,9 @@ int main(int argc, char* argv[]){
         } else {
             typedef dll::dbn_desc<
                 dll::dbn_layers<
-                dll::rbm_desc<28 * 28, 300, dll::momentum, dll::batch_size<100>, dll::init_weights, dll::visible<dll::unit_type::GAUSSIAN>>::rbm_t,
-                dll::rbm_desc<300, 500, dll::momentum, dll::batch_size<100>>::rbm_t,
-                dll::rbm_desc<500, 10, dll::momentum, dll::batch_size<100>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
+                dll::rbm_desc<28 * 28, 300, dll::momentum, dll::batch_size<100>, dll::init_weights, dll::visible<dll::unit_type::GAUSSIAN>>::layer_t,
+                dll::rbm_desc<300, 500, dll::momentum, dll::batch_size<100>>::layer_t,
+                dll::rbm_desc<500, 10, dll::momentum, dll::batch_size<100>, dll::hidden<dll::unit_type::SOFTMAX>>::layer_t
                     >>::dbn_t dbn_t;
 
             auto dbn = std::make_unique<dbn_t>();
@@ -191,7 +191,7 @@ int main(int argc, char* argv[]){
                 dbn->pretrain(dataset.training_images, 20);
 
                 std::cout << "Start fine-tuning" << std::endl;
-                dbn->fine_tune(dataset.training_images, dataset.training_labels, 2, 1000);
+                dbn->fine_tune(dataset.training_images, dataset.training_labels, 2);
 
                 std::ofstream os("dbn_gray.dat", std::ofstream::binary);
                 dbn->store(os);
@@ -218,9 +218,9 @@ int main(int argc, char* argv[]){
 
         typedef dll::dbn_desc<
             dll::dbn_layers<
-            dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
-            dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
-            dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
+            dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::layer_t,
+            dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::layer_t,
+            dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::layer_t
                 >, dll::watcher<dll::opencv_dbn_visualizer>>::dbn_t dbn_t;
 
         auto dbn = std::make_unique<dbn_t>();
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]){
         dbn->pretrain(dataset.training_images, 10);
 
         std::cout << "Start fine-tuning" << std::endl;
-        dbn->fine_tune(dataset.training_images, dataset.training_labels, 5, 1000);
+        dbn->fine_tune(dataset.training_images, dataset.training_labels, 5);
 
         std::ofstream os("dbn.dat", std::ofstream::binary);
         dbn->store(os);
@@ -241,9 +241,9 @@ int main(int argc, char* argv[]){
         if(simple){
             typedef dll::dbn_desc<
                 dll::dbn_label_layers<
-                dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-                dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t,
-                dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::rbm_t
+                dll::rbm_desc<28 * 28, 100, dll::batch_size<50>, dll::init_weights, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::layer_t,
+                dll::rbm_desc<100, 100, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::layer_t,
+                dll::rbm_desc<110, 200, dll::batch_size<50>, dll::momentum, dll::weight_decay<dll::decay_type::L2>>::layer_t
                     >>::dbn_t dbn_simple_t;
 
             auto dbn = std::make_shared<dbn_simple_t>();
@@ -253,8 +253,8 @@ int main(int argc, char* argv[]){
             test_all(dbn, dataset, dll::label_predictor());
         } else if(svm){ typedef dll::dbn_desc<
             dll::dbn_layers<
-                dll::rbm_desc<28 * 28, 400, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
-                dll::rbm_desc<400, 600, dll::momentum, dll::batch_size<50>>::rbm_t
+                dll::rbm_desc<28 * 28, 400, dll::momentum, dll::batch_size<50>, dll::init_weights>::layer_t,
+                dll::rbm_desc<400, 600, dll::momentum, dll::batch_size<50>>::layer_t
                     >>::dbn_t dbn_t;
 
             auto dbn = std::make_unique<dbn_t>();
@@ -285,9 +285,9 @@ int main(int argc, char* argv[]){
         } else {
             typedef dll::dbn_desc<
                 dll::dbn_layers<
-                dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::rbm_t,
-                dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::rbm_t,
-                dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::rbm_t
+                dll::rbm_desc<28 * 28, 100, dll::momentum, dll::batch_size<50>, dll::init_weights>::layer_t,
+                dll::rbm_desc<100, 200, dll::momentum, dll::batch_size<50>>::layer_t,
+                dll::rbm_desc<200, 10, dll::momentum, dll::batch_size<50>, dll::hidden<dll::unit_type::SOFTMAX>>::layer_t
                     >, dll::watcher<dll::default_dbn_watcher>>::dbn_t dbn_t;
 
             auto dbn = std::make_unique<dbn_t>();
@@ -304,7 +304,7 @@ int main(int argc, char* argv[]){
                 dbn->pretrain(dataset.training_images, 10);
 
                 std::cout << "Start fine-tuning" << std::endl;
-                dbn->fine_tune(dataset.training_images, dataset.training_labels, 5, 1000);
+                dbn->fine_tune(dataset.training_images, dataset.training_labels, 5);
 
                 std::ofstream os("dbn.dat", std::ofstream::binary);
                 dbn->store(os);

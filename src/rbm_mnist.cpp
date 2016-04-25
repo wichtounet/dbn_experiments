@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>(5000);
+    auto dataset = mnist::read_dataset_direct<std::vector, etl::dyn_vector<float>>(1000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         std::cout << "Impossible to read dataset" << std::endl;
@@ -42,13 +42,10 @@ int main(int argc, char* argv[]){
     mnist::binarize_dataset(dataset);
 
     if(!view){
-        dll::rbm_desc<
-            28 * 28, 200,
-               dll::momentum,
-               dll::batch_size<25>
-               //dll::hidden<dll::unit_type::RELU>,
-               //dll::visible<dll::unit_type::GAUSSIAN>
-                   >::rbm_t rbm;
+      dll::rbm_desc<28 * 28, 200, dll::momentum, dll::batch_size<25>
+                    // dll::hidden<dll::unit_type::RELU>,
+                    // dll::visible<dll::unit_type::GAUSSIAN>
+                    >::layer_t rbm;
 
         if(load){
             std::ifstream is("rbm-1.dat", std::ofstream::binary);
@@ -80,17 +77,16 @@ int main(int argc, char* argv[]){
             }
         }
     } else {
-        dll::rbm_desc<
-            28 * 28, 14*14,
-               //dll::init_weights,
-               dll::momentum,
-               dll::weight_decay<dll::decay_type::L2>,
-               dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
-               dll::trainer<dll::pcd1_trainer_t>,
-               //dll::init_weights,
-               dll::batch_size<50>,
-               //dll::visible<dll::unit_type::GAUSSIAN>,
-               dll::watcher<dll::opencv_rbm_visualizer>>::rbm_t rbm;
+      dll::rbm_desc<28 * 28, 14 * 14,
+                    // dll::init_weights,
+                    dll::momentum,
+                    dll::weight_decay<dll::decay_type::L2>,
+                    dll::sparsity<dll::sparsity_method::LOCAL_TARGET>,
+                    dll::trainer_rbm<dll::pcd1_trainer_t>,
+                    // dll::init_weights,
+                    dll::batch_size<50>,
+                    // dll::visible<dll::unit_type::GAUSSIAN>,
+                    dll::watcher<dll::opencv_rbm_visualizer>>::layer_t rbm;
 
         //rbm.momentum = 0.9;
         rbm.sparsity_target = 0.01;
