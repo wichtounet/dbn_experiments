@@ -13,8 +13,7 @@
 
 #include "dll/conv_rbm.hpp"
 #include "dll/conv_rbm_mp.hpp"
-#include "dll/conv_dbn.hpp"
-#include "dll/cpp_utils/algorithm.hpp"
+#include "dll/dbn.hpp"
 
 #include "mnist/mnist_reader.hpp"
 #include "mnist/mnist_utils.hpp"
@@ -35,7 +34,6 @@ void test_all(DBN& dbn, Dataset& dataset, P&& predictor){
 int main(int argc, char* argv[]){
     auto load = false;
     auto svm = false;
-    auto grid = false;
     auto mp = false;
     auto shuffle = false;
 
@@ -46,8 +44,6 @@ int main(int argc, char* argv[]){
             load = true;
         } else if(command == "svm"){
             svm = true;
-        } else if(command == "grid"){
-            grid = true;
         } else if(command == "mp"){
             mp = true;
         } else if(command == "shuffle"){
@@ -55,7 +51,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    auto dataset = mnist::read_dataset<std::vector, std::vector, double>();
+    auto dataset = mnist::read_dataset_direct<std::vector, etl::fast_dyn_matrix<double, 1, 28, 28>>(1000);
 
     if(dataset.training_images.empty() || dataset.training_labels.empty()){
         return 1;
@@ -76,27 +72,27 @@ int main(int argc, char* argv[]){
     mnist::binarize_dataset(dataset);
 
     if(mp){
-        typedef dll::conv_dbn_desc<
+        typedef dll::dbn_desc<
             dll::dbn_layers<
-            dll::conv_rbm_mp_desc<28, 1, 18, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t,
-            dll::conv_rbm_mp_desc<9, 40, 6, 40, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
-                >, dll::concatenate>::dbn_t dbn_t;
+            dll::conv_rbm_mp_desc_square<1, 28, 40, 18, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::layer_t,
+            dll::conv_rbm_mp_desc_square<40, 9, 40, 6, 2, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::layer_t
+                >, dll::svm_concatenate>::dbn_t dbn_t;
 
         auto dbn = std::make_unique<dbn_t>();
 
-        dbn->layer<0>().pbias = 0.05;
-        dbn->layer<0>().pbias_lambda = 50;
+        dbn->layer_get<0>().pbias = 0.05;
+        dbn->layer_get<0>().pbias_lambda = 50;
 
-        dbn->layer<1>().pbias = 0.05;
-        dbn->layer<1>().pbias_lambda = 100;
+        dbn->layer_get<1>().pbias = 0.05;
+        dbn->layer_get<1>().pbias_lambda = 100;
 
         dbn->display();
 
-        std::cout << "RBM1: Input: " << dbn->layer<0>().input_size() << std::endl;
-        std::cout << "RBM1: Output: " << dbn->layer<0>().output_size() << std::endl;
+        std::cout << "RBM1: Input: " << dbn->layer_get<0>().input_size() << std::endl;
+        std::cout << "RBM1: Output: " << dbn->layer_get<0>().output_size() << std::endl;
 
-        std::cout << "RBM2: Input: " << dbn->layer<1>().input_size() << std::endl;
-        std::cout << "RBM2: Output: " << dbn->layer<1>().output_size() << std::endl;
+        std::cout << "RBM2: Input: " << dbn->layer_get<1>().input_size() << std::endl;
+        std::cout << "RBM2: Output: " << dbn->layer_get<1>().output_size() << std::endl;
 
         if(svm){
             if(load){
@@ -109,33 +105,18 @@ int main(int argc, char* argv[]){
                 dbn->pretrain(dataset.training_images, 50);
             }
 
-            if(grid){
-                svm::rbf_grid grid;
-                grid.type = svm::grid_search_type::LINEAR;
-                grid.c_first = 0.5;
-                grid.c_last = 18;
-                grid.c_steps = 12;
-                grid.gamma_first = 0.0;
-                grid.gamma_last = 1.0;
-                grid.gamma_steps = 12;
+            auto parameters = dll::default_svm_parameters();
+            //parameters.C = 2.09091;
+            //parameters.gamma = 0.272727;
 
-                dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 4, grid);
-            } else {
-                auto parameters = dll::default_svm_parameters();
-                //parameters.C = 2.09091;
-                //parameters.gamma = 0.272727;
-
-                if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
-                    std::cout << "SVM training failed" << std::endl;
-                }
+            if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
+                std::cout << "SVM training failed" << std::endl;
             }
 
             std::ofstream os("dbn.dat", std::ofstream::binary);
             dbn->store(os);
 
-            if(!grid){
-                test_all(dbn, dataset, dll::svm_predictor());
-            }
+            test_all(dbn, dataset, dll::svm_predictor());
         } else {
             if(load){
                 std::cout << "Load from file" << std::endl;
@@ -151,27 +132,27 @@ int main(int argc, char* argv[]){
             }
         }
     } else {
-        typedef dll::conv_dbn_desc<
+        typedef dll::dbn_desc<
             dll::dbn_layers<
-            dll::conv_rbm_desc<28, 1, 17, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t,
-            dll::conv_rbm_desc<17, 40, 12, 40, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::rbm_t
+            dll::conv_rbm_desc_square<1, 28, 40, 17, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::layer_t,
+            dll::conv_rbm_desc_square<40, 17, 40, 12, dll::momentum, dll::batch_size<50>, dll::weight_decay<dll::decay_type::L2>, dll::sparsity<dll::sparsity_method::LEE>>::layer_t
                 >>::dbn_t dbn_t;
 
         auto dbn = std::make_unique<dbn_t>();
 
-        dbn->layer<0>().pbias = 0.05;
-        dbn->layer<0>().pbias_lambda = 50;
+        dbn->layer_get<0>().pbias = 0.05;
+        dbn->layer_get<0>().pbias_lambda = 50;
 
-        dbn->layer<1>().pbias = 0.05;
-        dbn->layer<1>().pbias_lambda = 100;
+        dbn->layer_get<1>().pbias = 0.05;
+        dbn->layer_get<1>().pbias_lambda = 100;
 
         dbn->display();
 
-        std::cout << "RBM1: Input: " << dbn->layer<0>().input_size() << std::endl;
-        std::cout << "RBM1: Output: " << dbn->layer<0>().output_size() << std::endl;
+        std::cout << "RBM1: Input: " << dbn->layer_get<0>().input_size() << std::endl;
+        std::cout << "RBM1: Output: " << dbn->layer_get<0>().output_size() << std::endl;
 
-        std::cout << "RBM2: Input: " << dbn->layer<1>().input_size() << std::endl;
-        std::cout << "RBM2: Output: " << dbn->layer<1>().output_size() << std::endl;
+        std::cout << "RBM2: Input: " << dbn->layer_get<1>().input_size() << std::endl;
+        std::cout << "RBM2: Output: " << dbn->layer_get<1>().output_size() << std::endl;
 
         if(svm){
             if(load){
@@ -184,33 +165,18 @@ int main(int argc, char* argv[]){
                 dbn->pretrain(dataset.training_images, 50);
             }
 
-            if(grid){
-                svm::rbf_grid grid;
-                grid.type = svm::grid_search_type::LINEAR;
-                grid.c_first = 0.5;
-                grid.c_last = 18;
-                grid.c_steps = 12;
-                grid.gamma_first = 0.0;
-                grid.gamma_last = 1.0;
-                grid.gamma_steps = 12;
+            auto parameters = dll::default_svm_parameters();
+            //parameters.C = 2.09091;
+            //parameters.gamma = 0.272727;
 
-                dbn->svm_grid_search(dataset.training_images, dataset.training_labels, 4, grid);
-            } else {
-                auto parameters = dll::default_svm_parameters();
-                //parameters.C = 2.09091;
-                //parameters.gamma = 0.272727;
-
-                if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
-                    std::cout << "SVM training failed" << std::endl;
-                }
+            if(!dbn->svm_train(dataset.training_images, dataset.training_labels, parameters)){
+                std::cout << "SVM training failed" << std::endl;
             }
 
             std::ofstream os("dbn.dat", std::ofstream::binary);
             dbn->store(os);
 
-            if(!grid){
-                test_all(dbn, dataset, dll::svm_predictor());
-            }
+            test_all(dbn, dataset, dll::svm_predictor());
         } else {
             if(load){
                 std::cout << "Load from file" << std::endl;

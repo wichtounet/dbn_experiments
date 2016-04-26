@@ -36,11 +36,11 @@ int main(int argc, char* argv[]){
         }
     }
 
-    dll::conv_rbm_desc<
-        28, 1, 16, 40,
+    dll::conv_rbm_desc_square<
+        1, 28, 40, 16,
         dll::batch_size<25>,
         dll::visible<dll::unit_type::BINARY>
-        >::rbm_t rbm;
+        >::layer_t rbm;
 
     auto dataset = mnist::read_dataset<std::vector, std::vector, double>(1000);
 
